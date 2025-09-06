@@ -25,7 +25,7 @@ const Login = () => {
     setNewCustomerLoading(true);
 
     try {
-      const response = await fetch('/api/guest-users/', {
+      const response = await fetch('https://e-commerce-backend-7yft.onrender.com/api/guest-users/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -67,7 +67,7 @@ const Login = () => {
     setLoginLoading(true);
 
     try {
-      const response = await fetch('/api/login/', {
+      const response = await fetch('https://e-commerce-backend-7yft.onrender.com/api/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

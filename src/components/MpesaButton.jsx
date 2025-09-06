@@ -7,7 +7,7 @@ const MpesaButton = () => {
 
   const handleMpesa = async () => {
     try {
-      const response = await fetch('/api/payment/mpesa/initiate/', {
+      const response = await fetch('https://e-commerce-backend-7yft.onrender.com/api/payment/mpesa/initiate/', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

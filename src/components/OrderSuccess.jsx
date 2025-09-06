@@ -20,7 +20,7 @@ const PaymentRedirect = () => {
     const initiatePayment = async () => {
       try {
         if (paymentMethod === 'mpesa') {
-          await fetch(`/api/payment/mpesa/initiate/`, {
+          await fetch(`https://e-commerce-backend-7yft.onrender.com/api/payment/mpesa/initiate/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId }),
@@ -30,7 +30,7 @@ const PaymentRedirect = () => {
             navigate(`/order-success/${orderId}`);
           }
         } else if (paymentMethod === 'tingg') {
-          const response = await fetch(`/api/payment/tingg/initiate/`, {
+          const response = await fetch(`https://e-commerce-backend-7yft.onrender.com/api/payment/tingg/initiate/`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ orderId }),
