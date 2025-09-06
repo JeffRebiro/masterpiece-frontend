@@ -8,8 +8,8 @@ const ITEMS_PER_PAGE = 8;
 const getImageUrl = (image) => {
   if (!image) return "";
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
-  if (image.startsWith("/media/")) return `https://e-commerce-backend-ccjf.onrender.com${image}`;
-  return `https://e-commerce-backend-ccjf.onrender.com/media/hire_items/${image}`;
+  if (image.startsWith("/media/")) return `https://e-commerce-backend-7yft.onrender.com${image}`;
+  return `https://e-commerce-backend-7yft.onrender.com/media/hire_items/${image}`;
 };
 
 const ItemsForHire = () => {
@@ -17,7 +17,7 @@ const ItemsForHire = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    axios.get("https://e-commerce-backend-ccjf.onrender.com/api/hire-items/")
+    axios.get("https://e-commerce-backend-7yft.onrender.com/api/hire-items/")
       .then((response) => {
         console.log("Hire Items:", response.data);
         setHireItems(response.data);

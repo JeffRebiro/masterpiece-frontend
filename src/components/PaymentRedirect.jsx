@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 
-const apiUrl = "https://e-commerce-backend-ccjf.onrender.com/api/";
+const apiUrl = "https://e-commerce-backend-7yft.onrender.com/api/";
 
 const PaymentRedirect = () => {
   const location = useLocation();

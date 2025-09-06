@@ -1,7 +1,7 @@
 {
   "name": "megamall",
   "private": true,
-  "proxy": "https://e-commerce-backend-ccjf.onrender.com",
+  "proxy": "https://e-commerce-backend-7yft.onrender.com",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

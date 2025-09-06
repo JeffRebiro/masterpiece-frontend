@@ -6,7 +6,7 @@ import axios from "axios";
 const getImageUrl = (image) => {
   if (!image) return "";
   if (image.startsWith("http")) return image;
-  return `https://e-commerce-backend-ccjf.onrender.com/media/products/${image}`;
+  return `https://e-commerce-backend-7yft.onrender.com/media/products/${image}`;
 };
 
 // Converts slug to readable name
@@ -28,7 +28,7 @@ const CategoryPage = () => {
     setLoading(true);
 
     // Directly use slug in query
-    axios.get(`https://e-commerce-backend-ccjf.onrender.com/api/products/?category=${categoryName}`)
+    axios.get(`https://e-commerce-backend-7yft.onrender.com/api/products/?category=${categoryName}`)
       .then((res) => {
         setProducts(res.data); // assume backend already filtered by slug
         setLoading(false);

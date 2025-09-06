@@ -63,7 +63,7 @@ const Courier = () => {
 
             console.log("🚀 Sending payload to backend:", payload);
 
-            const response = await axios.post('https://e-commerce-backend-ccjf.onrender.com/api/courier/', payload);
+            const response = await axios.post('https://e-commerce-backend-7yft.onrender.com/api/courier/', payload);
             alert(`Send order placed successfully! Tracking ID: ${response.data.id || 'N/A'}`);
         } catch (error) {
             console.error(error.response?.data || error.message);
@@ -91,7 +91,7 @@ const Courier = () => {
             };
 
             console.log("🚀 Sending receive payload:", payload);
-            const response = await axios.post('https://e-commerce-backend-ccjf.onrender.com/api/courier/', payload);
+            const response = await axios.post('https://e-commerce-backend-7yft.onrender.com/api/courier/', payload);
 
             alert(`Receive request submitted successfully! Tracking ID: ${response.data.id || 'N/A'}`);
         } catch (error) {

@@ -6,8 +6,8 @@ import { CartContext } from "../components/CartContext";
 const getImageUrl = (image) => {
   if (!image) return "";
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
-  if (image.startsWith("/media/")) return `https://e-commerce-backend-ccjf.onrender.com${image}`;
-  return `https://e-commerce-backend-ccjf.onrender.com/media/hire_items/${image}`;
+  if (image.startsWith("/media/")) return `https://e-commerce-backend-7yft.onrender.com${image}`;
+  return `https://e-commerce-backend-7yft.onrender.com/media/hire_items/${image}`;
 };
 
 const ItemsForHireDetails = () => {
@@ -22,7 +22,7 @@ const ItemsForHireDetails = () => {
 
   useEffect(() => {
     axios
-      .get(`https://e-commerce-backend-ccjf.onrender.com/api/hire-items/${id}/`)
+      .get(`https://e-commerce-backend-7yft.onrender.com/api/hire-items/${id}/`)
       .then((res) => {
         setItem(res.data);
       })

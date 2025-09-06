@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from "react";
 
 const AuthContext = createContext();
-const apiUrl = "https://e-commerce-backend-ccjf.onrender.com/api/";
+const apiUrl = "https://e-commerce-backend-7yft.onrender.com/api/";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

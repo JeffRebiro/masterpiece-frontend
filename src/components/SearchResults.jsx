@@ -6,8 +6,8 @@ import axios from "axios";
 const getImageUrl = (image) => {
   if (!image) return "";
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
-  if (image.startsWith("/media/")) return `https://e-commerce-backend-ccjf.onrender.com${image}`;
-  return `https://e-commerce-backend-ccjf.onrender.com/media/products/${image}`;
+  if (image.startsWith("/media/")) return `https://e-commerce-backend-7yft.onrender.com${image}`;
+  return `https://e-commerce-backend-7yft.onrender.com/media/products/${image}`;
 };
 
 const SearchResults = () => {
@@ -18,7 +18,7 @@ const SearchResults = () => {
   const query = new URLSearchParams(location.search).get("query")?.toLowerCase() || "";
 
   useEffect(() => {
-    axios.get("https://e-commerce-backend-ccjf.onrender.com/api/products/")
+    axios.get("https://e-commerce-backend-7yft.onrender.com/api/products/")
       .then((res) => {
         setAllProducts(res.data);
       })

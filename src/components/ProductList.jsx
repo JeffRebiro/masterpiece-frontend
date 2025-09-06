@@ -3,7 +3,7 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 
 const ITEMS_PER_PAGE = 8;
-const API_BASE_URL = "https://e-commerce-backend-ccjf.onrender.com/api/products/";
+const API_BASE_URL = "https://e-commerce-backend-7yft.onrender.com/api/products/";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);

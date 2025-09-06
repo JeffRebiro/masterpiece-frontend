@@ -14,7 +14,7 @@ const ProductDetail = () => {
 
   useEffect(() => {
     axios
-      .get(`https://e-commerce-backend-ccjf.onrender.com/api/products/${id}/`)
+      .get(`https://e-commerce-backend-7yft.onrender.com/api/products/${id}/`)
       .then((res) => {
         setProduct(res.data);
       })
