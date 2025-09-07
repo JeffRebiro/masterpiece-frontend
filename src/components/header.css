@@ -52,6 +52,8 @@
 /* Submenu */
 .submenu {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .submenu ul {
