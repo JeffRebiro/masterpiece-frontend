@@ -27,10 +27,10 @@ const CategoryPage = () => {
   useEffect(() => {
     setLoading(true);
 
-    // Directly use slug in query
     axios.get(`https://e-commerce-backend-7yft.onrender.com/api/products/?category=${categoryName}`)
       .then((res) => {
-        setProducts(res.data); // assume backend already filtered by slug
+        const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+        setProducts(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -38,6 +38,7 @@ const CategoryPage = () => {
         setLoading(false);
       });
   }, [categoryName]);
+
 
   return (
     <section className="section">

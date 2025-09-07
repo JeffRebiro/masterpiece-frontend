@@ -1,154 +1,178 @@
 /* Base styles */
 .header-area {
-    width: 100%;
-    background-color: #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-  }
-  
+  width: 100%;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  flex-wrap: nowrap;
+}
+
+.header-content-wrapper.active {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Logo */
+.header-logo img {
+  height: 40px;
+}
+
+/* Navigation */
+.main-nav-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.nav-links li a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.nav-links li a:hover {
+  color: #007bff;
+}
+
+/* Submenu */
+.submenu {
+  position: relative;
+}
+
+.submenu ul {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  list-style: none;
+  padding: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 999;
+  width: max-content;
+}
+
+.submenu:hover ul {
+  display: block;
+}
+
+.submenu ul li {
+  margin: 5px 0;
+}
+
+.submenu ul li a {
+  color: #333;
+  font-size: 14px;
+}
+
+/* Search & Cart */
+.search-cart-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.search-cart-group input {
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+.search-cart-group button {
+  background: none;
+  border: none;
+  margin-left: 5px;
+  cursor: pointer;
+}
+
+.cart-icon {
+  position: relative;
+  color: #333;
+  font-size: 20px;
+}
+
+.cart-icon span {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 12px;
+}
+
+/* Hamburger Icon */
+.menu-trigger {
+  display: none;
+  cursor: pointer;
+  font-size: 22px;
+  color: #007bff;
+  margin-left: auto;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
   .header-content-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
   }
-  
-  .header-logo img {
-    height: 40px;
-  }
-  
-  /* Navigation */
+
   .main-nav-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    display: none;
   }
-  
+
+  .header-content-wrapper.active .main-nav-wrapper {
+    display: flex;
+  }
+
   .nav-links {
-    display: flex;
-    list-style: none;
-    gap: 15px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
   }
-  
-  .nav-links li a {
-    text-decoration: none;
-    color: #333;
-    font-weight: 500;
-    transition: color 0.3s ease;
+
+  .nav-links li {
+    width: 100%;
+    padding: 10px 0;
   }
-  
-  .nav-links li a:hover {
-    color: #007bff;
-  }
-  
-  /* Submenu */
-  .submenu {
-    position: relative;
-  }
-  
+
   .submenu ul {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: #fff;
-    list-style: none;
-    padding: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    z-index: 999;
-    width: max-content;
+    position: static;
+    box-shadow: none;
+    padding-left: 15px;
+    background: transparent;
   }
-  
-  .submenu:hover ul {
-    display: block;
-  }
-  
-  .submenu ul li {
-    margin: 5px 0;
-  }
-  
-  .submenu ul li a {
-    color: #333;
-    font-size: 14px;
-  }
-  
-  /* Search & Cart */
+
   .search-cart-group {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+    width: 100%;
+    justify-content: space-between;
+    margin-top: 10px;
   }
-  
-  .cart-icon {
-    position: relative;
-    color: #333;
-  }
-  
-  .cart-icon i {
-    font-size: 20px;
-  }
-  
-  .cart-icon span {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: red;
-    color: white;
-    border-radius: 50%;
-    padding: 2px 6px;
-    font-size: 12px;
-  }
-  
-  /* Mobile menu trigger */
+
   .menu-trigger {
-    display: none;
-    cursor: pointer;
-    font-weight: bold;
-    color: #007bff;
+    display: block;
+    margin-top: 10px;
   }
-  
-  /* Responsive styles */
-  @media (max-width: 768px) {
-    .main-nav-wrapper {
-      flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
-      display: none;
-    }
-  
-    .header-content-wrapper.active .main-nav-wrapper {
-      display: flex;
-    }
-  
-    .nav-links {
-      flex-direction: column;
-      width: 100%;
-    }
-  
-    .nav-links li {
-      width: 100%;
-      padding: 10px 0;
-    }
-  
-    .submenu ul {
-      position: static;
-      box-shadow: none;
-      padding-left: 15px;
-    }
-  
-    .search-cart-group {
-      width: 100%;
-      justify-content: space-between;
-      margin-top: 10px;
-    }
-  
-    .menu-trigger {
-      display: block;
-      margin-top: 10px;
-    }
-  }
-  
+}

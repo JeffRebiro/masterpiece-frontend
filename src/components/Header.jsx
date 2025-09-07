@@ -3,11 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import '../components/header.css';
 import { CartContext } from '../components/CartContext';
 
-
 const Header = () => {
   const { cartItems } = useContext(CartContext);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -16,37 +16,36 @@ const Header = () => {
     if (searchTerm.trim()) {
       navigate(`/search?query=${encodeURIComponent(searchTerm.trim())}`);
       setSearchTerm('');
+      setIsMobileMenuOpen(false);
     }
   };
-
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Added state for mobile menu
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   return (
-    <header className="header-area header-sticky">
-      {/* Make this 'row-container' the main flex parent */}
-      <div className={`header-content-wrapper row ${isMobileMenuOpen ? 'active' : ''}`}> {/* Added active for mobile class */}
-        {/* Logo - This is now a direct child of 'header-content-wrapper' */}
+    <header className="header-area">
+      <div className={`header-content-wrapper ${isMobileMenuOpen ? 'active' : ''}`}>
         <div className="header-logo">
-          <Link to="/" onClick={() => setIsMobileMenuOpen(false)}> {/* Link to the homepage */}
+          <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
             <img src="/images/masterlogo.png" alt="Logo" />
           </Link>
         </div>
 
-        {/* This will contain ALL navigation, search, and the mobile trigger */}
-        <nav className="main-nav-wrapper"> {/* Renamed from main-nav */}
-          {/* Main Navigation links */}
-          <ul className="nav-links"> {/* Renamed from nav */}
-            
+        {/* Hamburger Icon */}
+        <div className="menu-trigger" onClick={toggleMobileMenu}>
+          <i className="fas fa-bars"></i>
+        </div>
+
+        <nav className="main-nav-wrapper">
+          <ul className="nav-links">
             <li><Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>Megamall</Link></li>
             <li><Link to="/courier" onClick={() => setIsMobileMenuOpen(false)}>Courier Services</Link></li>
             <li><Link to="/hire-items" onClick={() => setIsMobileMenuOpen(false)}>Items for Hire</Link></li>
 
             <li className="submenu">
-              <a href="#" onClick={(e) => { e.preventDefault(); /* Prevent default for submenu */ }}>Categories</a>
+              <a href="#" onClick={(e) => e.preventDefault()}>Categories</a>
               <ul>
                 <li><Link to="/category/audio-video-equipment" onClick={() => setIsMobileMenuOpen(false)}>Audio & Video Equipment</Link></li>
                 <li><Link to="/category/bicycles-accessories" onClick={() => setIsMobileMenuOpen(false)}>Bicycle & Accessories</Link></li>
@@ -76,56 +75,24 @@ const Header = () => {
             </li>
           </ul>
 
-          {/* Search Bar + Cart Icon - Now grouped for flexible positioning */}
           <div className="search-cart-group">
-            <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center' }}>
+            <form onSubmit={handleSearch}>
               <input
                 type="text"
                 placeholder="Search..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  padding: '5px 10px',
-                  borderRadius: '20px',
-                  border: '1px solid #ccc',
-                  outline: 'none'
-                }}
               />
-              <button type="submit" style={{ background: 'none', border: 'none', marginLeft: '5px' }}>
+              <button type="submit">
                 <i className="fas fa-search"></i>
               </button>
             </form>
 
-            <Link
-              to="/cart"
-              className="cart-icon"
-              style={{ position: 'relative', fontSize: '18px' }}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
+            <Link to="/cart" className="cart-icon" onClick={() => setIsMobileMenuOpen(false)}>
               <i className="fas fa-shopping-cart"></i>
-              {cartCount > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    right: "-8px",
-                    background: "red",
-                    color: "white",
-                    borderRadius: "50%",
-                    padding: "2px 6px",
-                    fontSize: "12px"
-                  }}
-                >
-                  {cartCount}
-                </span>
-              )}
+              {cartCount > 0 && <span>{cartCount}</span>}
             </Link>
           </div>
-
-          {/* Mobile Menu Trigger - direct child of main-nav-wrapper */}
-          <a className="menu-trigger" onClick={toggleMobileMenu}>
-            <span>Menu</span>
-          </a>
         </nav>
       </div>
     </header>

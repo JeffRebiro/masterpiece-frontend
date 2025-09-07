@@ -48,8 +48,7 @@ const Home = () => {
                     <a href="/products"> 
                       <img src="/images/mmall.jpg" alt="Girl Hat" style={{ width: '100%' }} className="w3-padding-16" />
                     </a>
-                    <p><strong>More Hats!</strong>I am crazy about hats these days. Some text about this blog entry. Fashion fashion and mauris neque quam, fermentum ut nisl vitae, convallis maximus nisl. Sed mattis nunc id lorem euismod placerat. Vivamus porttitor magna enim, ac accumsan tortor cursus at. Phasellus sed ultricies mi non congue ullam corper. Praesent tincidunt sedtellus ut rutrum. Sed vitae justo condimentum, porta lectus vitae, ultricies congue gravida diam non fringilla.
-                      Sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+                    <p><strong>More Hats!</strong>I am crazy about hats these days. Some text about this blog entry. Fashion fashion and mauris neque quam, fermentum ut nisl vitae, convallis maximus nisl.</p>
                     <p className="w3-left">
                       <button className="w3-button w3-white w3-border" onClick={(e) => window.likeFunction(e.target)}>
                         <b><i className="fa fa-thumbs-up"></i> Like</b>
@@ -152,8 +151,7 @@ const Home = () => {
                     <a href="/courier">
                     <img src="/images/courier.png" alt="Girl Hat" style={{ width: '100%' }} className="w3-padding-16" />
                     </a>
-                    <p><strong>More Hats!</strong>I am crazy about hats these days. Some text about this blog entry. Fashion fashion and mauris neque quam, fermentum ut nisl vitae, convallis maximus nisl. Sed mattis nunc id lorem euismod placerat. Vivamus porttitor magna enim, ac accumsan tortor cursus at. Phasellus sed ultricies mi non congue ullam corper. Praesent tincidunt sedtellus ut rutrum. Sed vitae justo condimentum, porta lectus vitae, ultricies congue gravida diam non fringilla.
-                      Sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+                    <p><strong>More Hats!</strong>I am crazy about hats these days. Some text about this blog entry. Fashion fashion and mauris neque quam, fermentum ut nisl vitae, convallis maximus nisl. </p>
                     <p className="w3-left">
                       <button className="w3-button w3-white w3-border" onClick={(e) => window.likeFunction(e.target)}>
                         <b><i className="fa fa-thumbs-up"></i> Like</b>
@@ -252,8 +250,7 @@ const Home = () => {
                     <a href="/hire-items">
                     <img src="/images/forhire.png" alt="Girl Hat" style={{ width: '100%', height: '9%' }} className="w3-padding-16" />
                     </a>
-                    <p><strong>More Hats!</strong>I am crazy about hats these days. Some text about this blog entry. Fashion fashion and mauris neque quam, fermentum ut nisl vitae, convallis maximus nisl. Sed mattis nunc id lorem euismod placerat. Vivamus porttitor magna enim, ac accumsan tortor cursus at. Phasellus sed ultricies mi non congue ullam corper. Praesent tincidunt sedtellus ut rutrum. Sed vitae justo condimentum, porta lectus vitae, ultricies congue gravida diam non fringilla.
-                      Sunt in culpa qui officia deserunt mollit anim id est laborum consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+                    <p><strong>More Hats!</strong>I am crazy about hats these days. Some text about this blog entry. Fashion fashion and mauris neque quam, fermentum ut nisl vitae, convallis maximus nisl.</p>
                     <p className="w3-left">
                       <button className="w3-button w3-white w3-border" onClick={(e) => window.likeFunction(e.target)}>
                         <b><i className="fa fa-thumbs-up"></i> Like</b>
