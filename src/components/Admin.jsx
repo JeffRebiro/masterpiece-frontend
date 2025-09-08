@@ -81,7 +81,7 @@ const Admin = () => {
     const fetchUsers = async () => {
         setLoading(prev => ({ ...prev, users: true }));
         try {
-            const response = await fetch(`${API_BASE}/api/users`);
+            const response = await fetch(`${API_BASE}/api/guest-users`);
             const data = await response.json();
             setUsers(data);
         } catch (error) {
