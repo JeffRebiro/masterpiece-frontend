@@ -54,11 +54,25 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, products: true }));
         try {
             const response = await fetch(`${API_BASE}/api/products`);
+            // Add a check to ensure the response is OK and JSON
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
-            setProducts(data);
+            // Ensure the fetched data is an array before setting the state
+            if (Array.isArray(data)) {
+                setProducts(data);
+            } else if (data && Array.isArray(data.results)) {
+                // If your API is paginated and returns data in a 'results' key
+                setProducts(data.results);
+            } else {
+                console.error('API response for products is not an array:', data);
+                setProducts([]); // Set to an empty array to prevent errors
+            }
         } catch (error) {
             console.error('Error fetching products:', error);
             showToast('Error fetching products');
+            setProducts([]); // Set to an empty array on error
         } finally {
             setLoading(prev => ({ ...prev, products: false }));
         }
@@ -68,11 +82,20 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, categories: true }));
         try {
             const response = await fetch(`${API_BASE}/api/categories`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
-            setCategories(data);
+            if (Array.isArray(data)) {
+                setCategories(data);
+            } else {
+                console.error('API response for categories is not an array:', data);
+                setCategories([]);
+            }
         } catch (error) {
             console.error('Error fetching categories:', error);
             showToast('Error fetching categories');
+            setCategories([]);
         } finally {
             setLoading(prev => ({ ...prev, categories: false }));
         }
@@ -82,11 +105,20 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, users: true }));
         try {
             const response = await fetch(`${API_BASE}/api/guest-users`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
-            setUsers(data);
+            if (Array.isArray(data)) {
+                setUsers(data);
+            } else {
+                console.error('API response for users is not an array:', data);
+                setUsers([]);
+            }
         } catch (error) {
             console.error('Error fetching users:', error);
             showToast('Error fetching users');
+            setUsers([]);
         } finally {
             setLoading(prev => ({ ...prev, users: false }));
         }
@@ -96,16 +128,26 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, hireItems: true }));
         try {
             const response = await fetch(`${API_BASE}/api/hire-items`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
-            setHireItems(data);
+            if (Array.isArray(data)) {
+                setHireItems(data);
+            } else {
+                console.error('API response for hire items is not an array:', data);
+                setHireItems([]);
+            }
         } catch (error) {
             console.error('Error fetching hire items:', error);
             showToast('Error fetching hire items');
+            setHireItems([]);
         } finally {
             setLoading(prev => ({ ...prev, hireItems: false }));
         }
     };
 
+    // The rendering functions now safely assume the state variables are arrays
     const renderDashboard = () => (
         <div className="content-section active" id="dashboard-section">
             <div className="header">
@@ -252,7 +294,7 @@ const Admin = () => {
             <div className="card">
                 <div className="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 className="m-0 font-weight-bold">All Hire Items</h6>
-                    <input type="text" className="form-control form-control-sm" style={{width: '200px'}} placeholder="Search hire items..."/>
+                    <input type="text" className="form-control form-control-sm" style={{ width: '200px' }} placeholder="Search hire items..." />
                 </div>
                 <div className="card-body">
                     {loading.hireItems ? (
@@ -277,7 +319,7 @@ const Admin = () => {
                                     {hireItems.map(item => (
                                         <tr key={item.id}>
                                             <td>
-                                                <img 
+                                                <img
                                                     src={item.image || `https://via.placeholder.com/60/4e73df/ffffff?text=${item.name.charAt(0)}`}
                                                     className="product-image"
                                                     alt={item.name}
@@ -401,7 +443,87 @@ const Admin = () => {
             </div>
         </div>
     );
-    // Removed renderCategories and renderUsers for brevity but you should keep them
+
+    // You also need to include your renderCategories and renderUsers functions here
+    const renderCategories = () => (
+        // Add your categories content here, similar to the other functions
+        <div className="content-section" id="categories-section" style={{ display: activeSection === 'categories' ? 'block' : 'none' }}>
+            {/* Add your Categories table and controls here */}
+            <h2>Categories Management</h2>
+            <div className="card">
+                <div className="card-body">
+                    {loading.categories ? (
+                        <div className="text-center"><div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div></div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Slug</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {categories.map(category => (
+                                        <tr key={category.id}>
+                                            <td>{category.name}</td>
+                                            <td>{category.slug}</td>
+                                            <td className="action-buttons">
+                                                <button className="btn btn-sm btn-warning"><i className="fas fa-edit"></i></button>
+                                                <button className="btn btn-sm btn-danger"><i className="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+    
+    const renderUsers = () => (
+        // Add your users content here
+        <div className="content-section" id="users-section" style={{ display: activeSection === 'users' ? 'block' : 'none' }}>
+            {/* Add your Users table and controls here */}
+            <h2>Users Management</h2>
+            <div className="card">
+                <div className="card-body">
+                    {loading.users ? (
+                        <div className="text-center"><div className="spinner-border" role="status"><span className="visually-hidden">Loading...</span></div></div>
+                    ) : (
+                        <div className="table-responsive">
+                            <table className="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Joined On</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {users.map(user => (
+                                        <tr key={user.id}>
+                                            <td>{user.name}</td>
+                                            <td>{user.email}</td>
+                                            <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                                            <td className="action-buttons">
+                                                <button className="btn btn-sm btn-warning"><i className="fas fa-edit"></i></button>
+                                                <button className="btn btn-sm btn-danger"><i className="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div className="d-flex">
