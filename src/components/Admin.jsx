@@ -82,20 +82,17 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, categories: true }));
         try {
             const response = await fetch(`${API_BASE}/api/categories`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
             const data = await response.json();
-            if (Array.isArray(data)) {
-                setCategories(data);
+            // Correct way to set the state with the array from the 'results' key
+            if (data.results) {
+                setCategories(data.results);
             } else {
-                console.error('API response for categories is not an array:', data);
-                setCategories([]);
+                // Fallback for non-paginated responses or errors
+                setCategories(data);
             }
         } catch (error) {
             console.error('Error fetching categories:', error);
-            showToast('Error fetching categories');
-            setCategories([]);
+            setCategories([]); // Reset to empty array on error
         } finally {
             setLoading(prev => ({ ...prev, categories: false }));
         }
@@ -105,19 +102,14 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, users: true }));
         try {
             const response = await fetch(`${API_BASE}/api/guest-users`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
             const data = await response.json();
-            if (Array.isArray(data)) {
-                setUsers(data);
+            if (data.results) {
+                setUsers(data.results);
             } else {
-                console.error('API response for users is not an array:', data);
-                setUsers([]);
+                setUsers(data);
             }
         } catch (error) {
             console.error('Error fetching users:', error);
-            showToast('Error fetching users');
             setUsers([]);
         } finally {
             setLoading(prev => ({ ...prev, users: false }));
@@ -128,19 +120,14 @@ const Admin = () => {
         setLoading(prev => ({ ...prev, hireItems: true }));
         try {
             const response = await fetch(`${API_BASE}/api/hire-items`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
             const data = await response.json();
-            if (Array.isArray(data)) {
-                setHireItems(data);
+            if (data.results) {
+                setHireItems(data.results);
             } else {
-                console.error('API response for hire items is not an array:', data);
-                setHireItems([]);
+                setHireItems(data);
             }
         } catch (error) {
             console.error('Error fetching hire items:', error);
-            showToast('Error fetching hire items');
             setHireItems([]);
         } finally {
             setLoading(prev => ({ ...prev, hireItems: false }));
@@ -483,7 +470,7 @@ const Admin = () => {
             </div>
         </div>
     );
-    
+
     const renderUsers = () => (
         // Add your users content here
         <div className="content-section" id="users-section" style={{ display: activeSection === 'users' ? 'block' : 'none' }}>
