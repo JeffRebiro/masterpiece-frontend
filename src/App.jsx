@@ -19,7 +19,7 @@ import Home from './components/Home';
 import Courier from "./components/Courier";
 import ItemsForHire from "./components/ItemsForHire";
 import ItemsForHireDetails from "./components/ItemsForHireDetails";
-import Preloader from './components/Preloader'; // 👈 Import your Lottie preloader
+
 import React, { useState, useEffect } from 'react';
 
 function App() {
@@ -35,7 +35,6 @@ function App() {
     <Router>
       <CartProvider>
         <AuthProvider>
-          {loading ? <Preloader /> : <AppContent />}
         </AuthProvider>
       </CartProvider>
     </Router>
