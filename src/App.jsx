@@ -20,7 +20,7 @@ import Courier from "./components/Courier";
 import ItemsForHire from "./components/ItemsForHire";
 import ItemsForHireDetails from "./components/ItemsForHireDetails";
 import './App.css';
-import Admin from './Admin';
+import Admin from './components/Admin';
 import './styles.css';
 
 function App() {
