@@ -2,12 +2,10 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 
-const ITEMS_PER_PAGE = 8;
 const API_BASE_URL = "https://e-commerce-backend-7yft.onrender.com/api/products/";
 
 const ProductList = () => {
   const [products, setProducts] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     axios.get(API_BASE_URL)
@@ -27,13 +25,6 @@ const ProductList = () => {
       });
   }, []);
 
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const currentProducts = Array.isArray(products) ? products.slice(
-    startIndex,
-    startIndex + ITEMS_PER_PAGE
-  ) : [];
-  const totalPages = Math.ceil(products.length / ITEMS_PER_PAGE);
-
   return (
     <section className="section" id="men">
       <div className="container">
@@ -51,7 +42,7 @@ const ProductList = () => {
 
         {/* Products */}
         <div className="row">
-          {currentProducts.map((item) => (
+          {products.map((item) => (
             <div className="col-lg-3 col-md-4 col-sm-6 mb-4" key={item.id}>
               <div className="item">
                 <div className="thumb position-relative">
@@ -88,7 +79,6 @@ const ProductList = () => {
                       backgroundColor: "#f9f9f9",
                     }}
                   >
-                    {/* Use image_url directly (Cloudinary link) */}
                     {item.image_url && (
                       <img
                         src={item.image_url}
