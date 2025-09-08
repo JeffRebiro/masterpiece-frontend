@@ -20,6 +20,8 @@ import Courier from "./components/Courier";
 import ItemsForHire from "./components/ItemsForHire";
 import ItemsForHireDetails from "./components/ItemsForHireDetails";
 import './App.css';
+import Admin from './Admin';
+import './styles.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,6 @@ function App() {
           {loading ? (
             <div className="loader">
               <div className="spinner"></div>
-              {/* You can add a loading message here */}
             </div>
           ) : (
             <AppContent />
@@ -47,7 +48,7 @@ function App() {
     </Router>
   );
 }
-
+//----------------------------------------------------------------------------------------------------
 function AppContent() {
   const location = useLocation();
 
@@ -63,6 +64,7 @@ function AppContent() {
     '/checkout/confirmation/',
     '/order-success/',
     '/payment-redirect',
+    '/admin' // New Path
   ].some(path => location.pathname.startsWith(path));
 
   return (
@@ -85,6 +87,7 @@ function AppContent() {
           <Route path="/order-success/:orderId" element={<PaymentRedirect />} />
           <Route path="/hire-items" element={<ItemsForHire />} />
           <Route path="/hire-item/:id" element={<ItemsForHireDetails />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
       <Socials />
