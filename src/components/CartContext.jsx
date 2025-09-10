@@ -12,7 +12,7 @@ export const CartProvider = ({ children }) => {
     try {
       storedCart = JSON.parse(localStorage.getItem("cart")) || [];
     } catch (e) {
-      console.warn("Invalid cart data in localStorage");
+      console.warn("Invalid cart data in localStorage", e);
     }
     setCartItems(Array.isArray(storedCart) ? storedCart : []);
     setCartLoading(false);
@@ -23,21 +23,49 @@ export const CartProvider = ({ children }) => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Compute total price
+  // Compute total price correctly by handling different item types
   const totalPrice = useMemo(() => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return cartItems.reduce((sum, item) => {
+      if ('hire_price_per_day' in item || 'hire_price_per_hour' in item) {
+        // Handle hire items
+        const hours = parseFloat(item.hours ?? 0);
+        const days = parseFloat(item.days ?? 0);
+        const perHour = parseFloat(item.hire_price_per_hour ?? 0);
+        const perDay = parseFloat(item.hire_price_per_day ?? 0);
+        return sum + (hours * perHour) + (days * perDay);
+      } else {
+        // Handle standard sale items
+        const quantity = parseFloat(item.quantity || 1);
+        const price = parseFloat(item.price || 0);
+        return sum + (quantity * price);
+      }
+    }, 0);
   }, [cartItems]);
 
   // Add or update cart item
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (product, quantity = 1, hireDetails = {}) => {
     setCartItems(prevItems => {
       const existing = prevItems.find(item => item.id === product.id);
       if (existing) {
-        return prevItems.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
-        );
+        // Update an existing item
+        if ('hire_price_per_day' in product || 'hire_price_per_hour' in product) {
+          // For hire items, use hireDetails
+          return prevItems.map(item =>
+            item.id === product.id ? { ...item, ...hireDetails } : item
+          );
+        } else {
+          // For sale items, update quantity
+          return prevItems.map(item =>
+            item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          );
+        }
       } else {
-        return [...prevItems, { ...product, quantity }];
+        // Add a new item
+        if ('hire_price_per_day' in product || 'hire_price_per_hour' in product) {
+          return [...prevItems, { ...product, ...hireDetails }];
+        } else {
+          return [...prevItems, { ...product, quantity }];
+        }
       }
     });
   };
