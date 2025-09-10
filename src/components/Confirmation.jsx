@@ -4,12 +4,29 @@ import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Confirmation = () => {
-  const { cartItems, totalPrice, clearCart } = useCart();
+  const { cartItems, clearCart } = useCart();
   const { user, shippingAddress, placeOrder } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  // Compute total price safely
+  const computedTotal = cartItems.reduce((total, item) => {
+    if ('hire_price_per_day' in item || 'hire_price_per_hour' in item) {
+      // Use the nullish coalescing operator (??) to default to 0
+      const hours = parseFloat(item.hours ?? 0);
+      const days = parseFloat(item.days ?? 0);
+      const perHour = parseFloat(item.hire_price_per_hour ?? 0);
+      const perDay = parseFloat(item.hire_price_per_day ?? 0);
+      return total + (hours * perHour) + (days * perDay);
+    } else {
+      // Use the logical OR operator (||) for the same purpose
+      const quantity = parseFloat(item.quantity || 1);
+      const price = parseFloat(item.price || 0);
+      return total + (quantity * price);
+    }
+  }, 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +43,7 @@ const Confirmation = () => {
         cartItems,
         shippingAddress,
         user,
-        totalPrice,
+        totalPrice: computedTotal,
         paymentMethod,
       });
 
@@ -142,26 +159,26 @@ const Confirmation = () => {
                 <h2>Order contents</h2>
                 {cartItems.map((item) => {
                   const isHireItem =
-                    "hire_price_per_day" in item || "hire_price_per_hour" in item;
+                    'hire_price_per_day' in item || 'hire_price_per_hour' in item;
                   const name = item.name;
                   const image = item.image;
                   let quantityDisplay;
                   let itemTotal = 0;
 
                   if (isHireItem) {
-                    const duration = item.duration || 1;
-                    const durationType = item.durationType || "day";
-                    const rate =
-                      durationType === "hour"
-                        ? item.hire_price_per_hour || 0
-                        : item.hire_price_per_day || 0;
-                    itemTotal = duration * rate;
-                    quantityDisplay = `${duration} ${durationType}(s)`;
+                    // Add a nullish coalescing operator to handle undefined/null values
+                    const hours = parseFloat(item.hours ?? 0);
+                    const days = parseFloat(item.days ?? 0);
+                    const perHour = parseFloat(item.hire_price_per_hour ?? 0);
+                    const perDay = parseFloat(item.hire_price_per_day ?? 0);
+                    itemTotal = hours * perHour + days * perDay;
+                    quantityDisplay = `${hours} hr(s), ${days} day(s)`;
                   } else {
-                    const quantity = item.quantity || 1;
-                    const price = item.price || 0;
-                    itemTotal = price * quantity;
-                    quantityDisplay = quantity;
+                    // Use the logical OR operator for the same purpose
+                    const quantity = parseFloat(item.quantity || 1);
+                    const price = parseFloat(item.price || 0);
+                    itemTotal = quantity * price;
+                    quantityDisplay = `${quantity}`;
                   }
 
                   return (
@@ -171,7 +188,7 @@ const Confirmation = () => {
                           src={image}
                           alt={name}
                           className="img-thumbnail me-3 mb-2"
-                          style={{ width: "70px", height: "70px", objectFit: "cover" }}
+                          style={{ width: '70px', height: '70px', objectFit: 'cover' }}
                         />
                         <h6 className="mb-0">{name}</h6>
                       </div>
@@ -179,7 +196,7 @@ const Confirmation = () => {
                         <small>{quantityDisplay}</small>
                       </div>
                       <div className="col-6 col-md-3 text-start text-md-end mt-2 mt-md-0">
-                        <strong>KES {itemTotal}</strong>
+                        <strong>KES {itemTotal.toFixed(2)}</strong>
                       </div>
                     </div>
                   );
@@ -190,7 +207,7 @@ const Confirmation = () => {
                   <tbody>
                     <tr>
                       <th>Basket total</th>
-                      <td>KES {totalPrice}</td>
+                      <td>KES {computedTotal.toFixed(2)}</td>
                     </tr>
                     <tr>
                       <th>Delivery</th>
@@ -198,7 +215,9 @@ const Confirmation = () => {
                     </tr>
                     <tr className="table-success">
                       <th>Order total</th>
-                      <td><strong>KES {totalPrice}</strong></td>
+                      <td>
+                        <strong>KES {computedTotal.toFixed(2)}</strong>
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -226,20 +245,20 @@ const Confirmation = () => {
             <div className="card checkout-preview-card">
               <div className="card-body">
                 <h3>Place order</h3>
-                <p className="lead">Your order total is KES {totalPrice}</p>
+                <p className="lead">Your order total is KES {computedTotal.toFixed(2)}</p>
                 <p className="checkout-terms">
                   By placing an order you agree to the{' '}
                   <a href="/terms-and-conditions/" target="_blank" rel="noreferrer">
-                    terms and conditions
-                  </a>.
+                    terms and conditions.
+                  </a>
                 </p>
-                {error && <p className="text-danger">{error}</p>}
+                {error && <div className="alert alert-danger">{error}</div>}
                 <button
                   type="submit"
                   className="btn btn-primary w-100"
-                  disabled={!paymentMethod || loading}
+                  disabled={loading || !paymentMethod}
                 >
-                  {loading ? 'Placing order...' : 'Place order'}
+                  {loading ? 'Processing...' : 'Place order'}
                 </button>
               </div>
             </div>
