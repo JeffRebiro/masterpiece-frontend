@@ -55,51 +55,40 @@ const ItemsForHire = () => {
           {hireItems.map((item) => (
             <div className="col-lg-3 col-md-4 col-sm-6 mb-4" key={item.id}>
               <div className="item">
-                <div className="thumb position-relative">
-                  <div className="hover-content">
-                    <ul>
-                      <li><Link to={`/hire-item/${item.id}`}><i className="fa fa-eye"></i></Link></li>
-                      <li><Link to={`/hire-item/${item.id}`}><i className="fa fa-star"></i></Link></li>
-                      <li><Link to={`/hire-item/${item.id}`}><i className="fa fa-shopping-cart"></i></Link></li>
-                    </ul>
+                <Link to={`/hire-item/${item.id}`} style={{ textDecoration: "none", color: "inherit" }}>
+                  <div className="thumb position-relative">
+                    <div style={{
+                      width: "100%",
+                      height: "390px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                      borderRadius: "12px",
+                      border: "1px solid #ddd",
+                      backgroundColor: "#f9f9f9"
+                    }}>
+                      <img
+                        src={getImageUrl(item.image_url)}
+                        alt={item.name}
+                        crossOrigin="anonymous"
+                        style={{
+                          maxWidth: "100%",
+                          maxHeight: "100%",
+                          objectFit: "contain"
+                        }}
+                      />
+                    </div>
                   </div>
 
-                  <div style={{
-                    width: "100%",
-                    height: "390px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                    borderRadius: "12px",
-                    border: "1px solid #ddd",
-                    backgroundColor: "#f9f9f9"
-                  }}>
-                    <img
-                      src={getImageUrl(item.image_url)}
-                      alt={item.name}
-                      crossOrigin="anonymous"
-                      style={{
-                        maxWidth: "100%",
-                        maxHeight: "100%",
-                        objectFit: "contain"
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="down-content">
-                  <h4 style={{ color: "black", fontWeight: "bold" }}>
-                    <Link
-                      to={`/hire-item/${item.id}`}
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
+                  <div className="down-content mt-2">
+                    <h4 style={{ color: "black", fontWeight: "bold" }}>
                       {item.name || "Unnamed Item"}
-                    </Link>
-                  </h4>
-                  <span>Ksh. {item.hire_price_per_hour}/hr</span><br />
-                  <span>Ksh. {item.hire_price_per_day}/day</span>
-                </div>
+                    </h4>
+                    <span>Ksh. {item.hire_price_per_hour}/hr</span><br />
+                    <span>Ksh. {item.hire_price_per_day}/day</span>
+                  </div>
+                </Link>
               </div>
             </div>
           ))}
