@@ -151,7 +151,7 @@ const Confirmation = () => {
             {/* Order Contents */}
             <div className="card checkout-preview-card">
               <div className="checkout-preview-card-actions text-end p-2">
-                <a href="/basket/" className="btn btn-link" title="Edit order contents">
+                <a href="/cart/" className="btn btn-link" title="Edit order contents">
                   <small>Edit</small>
                 </a>
               </div>
@@ -182,7 +182,7 @@ const Confirmation = () => {
                   }
 
                   return (
-                    <div className="basket-line row py-3 align-items-center border-bottom" key={item.id}>
+                    <div className="cart-line row py-3 align-items-center border-bottom" key={item.id}>
                       <div className="col-12 col-md-7 d-flex flex-wrap align-items-center">
                         <img
                           src={image}
@@ -206,7 +206,7 @@ const Confirmation = () => {
                 <table className="table table-bordered table-sm mt-3">
                   <tbody>
                     <tr>
-                      <th>Basket total</th>
+                      <th>cart total</th>
                       <td>KES {computedTotal.toFixed(2)}</td>
                     </tr>
                     <tr>
