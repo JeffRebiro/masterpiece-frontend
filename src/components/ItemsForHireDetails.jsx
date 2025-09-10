@@ -3,7 +3,6 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { CartContext } from "../components/CartContext";
 
-// Normalize image URL
 const getImageUrl = (image) => {
   if (!image) return "";
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
@@ -33,14 +32,14 @@ const ItemsForHireDetails = () => {
   const handleAddToCart = () => {
     if (!item || !item.id) return;
 
-    const total = (
-      hours * parseFloat(item.hire_price_per_hour || 0) +
-      days * parseFloat(item.hire_price_per_day || 0)
-    ).toFixed(2);
-
     const existingIndex = cartItems.findIndex(
       (cartItem) => cartItem.id === item.id && cartItem.type === "hire"
     );
+
+    const total = (
+      hours * parseFloat(item.hire_price_per_hour) +
+      days * parseFloat(item.hire_price_per_day)
+    ).toFixed(2);
 
     let updatedCart;
 
@@ -88,30 +87,32 @@ const ItemsForHireDetails = () => {
       <div className="container">
         <div className="row">
           {/* Image */}
-          <div className="col-lg-8 mb-4">
-            <div
-              style={{
-                width: "100%",
-                height: "390px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                overflow: "hidden",
-                borderRadius: "12px",
-                border: "1px solid #ddd",
-                backgroundColor: "#f9f9f9",
-              }}
-            >
-              <img
-                src={getImageUrl(item.image_url)}
-                alt={item.name}
-                loading="lazy"
+          <div className="col-lg-8">
+            <div className="left-images">
+              <div
                 style={{
-                  maxHeight: "350px",
-                  maxWidth: "350px",
-                  objectFit: "contain",
+                  width: "100%",
+                  maxHeight: "500px",
+                  overflow: "hidden",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: "12px",
+                  border: "1px solid #ddd",
+                  backgroundColor: "#f9f9f9",
                 }}
-              />
+              >
+                <img
+                  src={getImageUrl(item.image_url)}
+                  alt={item.name}
+                  loading="lazy"
+                  style={{
+                    maxHeight: "350px",
+                    maxWidth: "350px",
+                    objectFit: "contain",
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -168,12 +169,12 @@ const ItemsForHireDetails = () => {
                 <h4>
                   Total: Ksh.{" "}
                   {(
-                    hours * parseFloat(item.hire_price_per_hour || 0) +
-                    days * parseFloat(item.hire_price_per_day || 0)
+                    hours * parseFloat(item.hire_price_per_hour) +
+                    days * parseFloat(item.hire_price_per_day)
                   ).toFixed(2)}
                 </h4>
                 <div className="main-border-button mt-2">
-                  <button className="btn btn-primary w-100" onClick={handleAddToCart}>
+                  <button className="btn btn-primary" onClick={handleAddToCart}>
                     Book
                   </button>
                 </div>
