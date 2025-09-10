@@ -87,64 +87,31 @@ const ItemsForHireDetails = () => {
     <section className="section" id="hire-item">
       <div className="container">
         <div className="row">
-          {/* Image with Icons */}
+          {/* Image */}
           <div className="col-lg-8 mb-4">
-            <div className="position-relative" style={{ width: "100%", maxHeight: "500px" }}>
-              <div
+            <div
+              style={{
+                width: "100%",
+                height: "390px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                borderRadius: "12px",
+                border: "1px solid #ddd",
+                backgroundColor: "#f9f9f9",
+              }}
+            >
+              <img
+                src={getImageUrl(item.image_url)}
+                alt={item.name}
+                loading="lazy"
                 style={{
-                  width: "100%",
-                  height: "390px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  overflow: "hidden",
-                  borderRadius: "12px",
-                  border: "1px solid #ddd",
-                  backgroundColor: "#f9f9f9",
+                  maxHeight: "350px",
+                  maxWidth: "350px",
+                  objectFit: "contain",
                 }}
-              >
-                <img
-                  src={getImageUrl(item.image_url)}
-                  alt={item.name}
-                  loading="lazy"
-                  style={{
-                    maxHeight: "350px",
-                    maxWidth: "350px",
-                    objectFit: "contain",
-                  }}
-                />
-              </div>
-
-              {/* Floating Icons */}
-              <div
-                className="position-absolute top-0 end-0 p-2 d-flex flex-column align-items-center"
-                style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.85)",
-                  borderRadius: "0 0 0.5rem 0.5rem",
-                  zIndex: 2,
-                }}
-              >
-                <button
-                  className="btn btn-sm btn-outline-dark mb-2"
-                  title="View Details"
-                  onClick={() => navigate(`/hire-item/${item.id}`)}
-                >
-                  <i className="fa fa-eye"></i>
-                </button>
-                <button
-                  className="btn btn-sm btn-outline-dark mb-2"
-                  title="Add to Favorites"
-                >
-                  <i className="fa fa-heart"></i>
-                </button>
-                <button
-                  className="btn btn-sm btn-outline-dark"
-                  title="Add to Cart"
-                  onClick={handleAddToCart}
-                >
-                  <i className="fa fa-shopping-cart"></i>
-                </button>
-              </div>
+              />
             </div>
           </div>
 
