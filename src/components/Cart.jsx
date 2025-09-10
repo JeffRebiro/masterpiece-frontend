@@ -1,72 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from './CartContext';
 
 const Cart = () => {
   const navigate = useNavigate();
-  const [cartItems, setCartItems] = useState([]);
+  // Get all cart data and functions from the centralized context
+  const { cartItems, totalPrice, removeFromCart, addToCart } = useCart();
 
-  // Load cart from localStorage on component mount
-  useEffect(() => {
-    try {
-      const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
-      setCartItems(Array.isArray(savedCart) ? savedCart : []);
-    } catch (e) {
-      console.error("Failed to parse cart data from localStorage", e);
-      setCartItems([]);
+  const handleQuantityChange = (item, delta) => {
+    // Only allow quantity changes for items that are not for hire
+    if (!('hire_price_per_day' in item || 'hire_price_per_hour' in item)) {
+      // Find the existing quantity and calculate the new one
+      const currentQuantity = item.quantity || 1;
+      const newQuantity = Math.max(1, currentQuantity + delta);
+
+      // Call the addToCart function with the updated quantity
+      addToCart({ ...item, quantity: newQuantity }, newQuantity - currentQuantity);
     }
-  }, []);
-
-  // Save cart to localStorage whenever cartItems changes
-  useEffect(() => {
-    try {
-      localStorage.setItem('cart', JSON.stringify(cartItems));
-    } catch (e) {
-      console.error("Failed to save cart to localStorage", e);
-    }
-  }, [cartItems]);
-
-  const handleQuantityChange = (index, delta) => {
-    setCartItems(prev => {
-      // Create a copy to avoid direct state mutation
-      const updatedItems = [...prev];
-      const item = updatedItems[index];
-
-      // Only allow quantity change for sale items, not hire items
-      if ('hire_price_per_day' in item || 'hire_price_per_hour' in item) {
-        return prev;
-      }
-
-      // Ensure quantity does not drop below 1
-      const newQuantity = Math.max(1, (item.quantity || 1) + delta);
-      updatedItems[index] = { ...item, quantity: newQuantity };
-
-      return updatedItems;
-    });
   };
 
-  const handleRemove = (index) => {
-    setCartItems(prev => prev.filter((_, i) => i !== index));
+  const handleRemove = (item) => {
+    removeFromCart(item.id);
   };
 
   const handleCheckout = () => {
-    // You should navigate to the checkout page, not login
-    navigate('/checkout/shipping-address'); 
+    navigate('/checkout/shipping-address');
   };
-
-  // Compute the total price based on the correct item properties
-  const total = cartItems.reduce((sum, item) => {
-    if ('hire_price_per_day' in item || 'hire_price_per_hour' in item) {
-      const hours = parseFloat(item.hours ?? 0);
-      const days = parseFloat(item.days ?? 0);
-      const perHour = parseFloat(item.hire_price_per_hour ?? 0);
-      const perDay = parseFloat(item.hire_price_per_day ?? 0);
-      return sum + (hours * perHour) + (days * perDay);
-    } else {
-      const quantity = parseFloat(item.quantity || 1);
-      const price = parseFloat(item.price || 0);
-      return sum + (quantity * price);
-    }
-  }, 0);
 
   return (
     <div className="container mt-5">
@@ -76,7 +35,7 @@ const Cart = () => {
       ) : (
         <>
           <ul className="list-group mb-4">
-            {cartItems.map((item, index) => {
+            {cartItems.map((item) => {
               const isHireItem = 'hire_price_per_day' in item || 'hire_price_per_hour' in item;
               let itemTotal = 0;
               if (isHireItem) {
@@ -93,7 +52,7 @@ const Cart = () => {
 
               return (
                 <li
-                  key={index}
+                  key={item.id}
                   className="list-group-item d-flex justify-content-between align-items-center"
                 >
                   <div style={{ flex: 1 }}>
@@ -107,15 +66,15 @@ const Cart = () => {
                       <div className="d-flex align-items-center mt-2">
                         <button
                           className="btn btn-sm btn-dark"
-                          onClick={() => handleQuantityChange(index, -1)}
-                          disabled={item.quantity <= 1} // Disable button if quantity is 1
+                          onClick={() => handleQuantityChange(item, -1)}
+                          disabled={item.quantity <= 1}
                         >
                           -
                         </button>
                         <span className="mx-2">{item.quantity || 1}</span>
                         <button
                           className="btn btn-sm btn-dark"
-                          onClick={() => handleQuantityChange(index, 1)}
+                          onClick={() => handleQuantityChange(item, 1)}
                         >
                           +
                         </button>
@@ -127,7 +86,7 @@ const Cart = () => {
                     <div>
                       Ksh. {itemTotal.toFixed(2)}
                     </div>
-                    <button className="btn btn-sm btn-danger mt-2" onClick={() => handleRemove(index)}>
+                    <button className="btn btn-sm btn-danger mt-2" onClick={() => handleRemove(item)}>
                       Remove
                     </button>
                   </div>
@@ -135,7 +94,7 @@ const Cart = () => {
               );
             })}
           </ul>
-          <h4>Total: Ksh. {total.toFixed(2)}</h4>
+          <h4>Total: Ksh. {totalPrice.toFixed(2)}</h4>
           <button className="btn btn-success mt-3" onClick={handleCheckout}>
             Proceed to Checkout
           </button>
