@@ -35,7 +35,7 @@ const ProductDetail = () => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image_url, // Use image_url for Cloudinary
+        image: product.image_url,
         quantity,
       }];
     }
@@ -65,16 +65,24 @@ const ProductDetail = () => {
           <div className="col-lg-8">
             <div className="left-images">
               <div style={{
-                width: "100%", maxHeight: "500px", overflow: "hidden",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                borderRadius: "12px", border: "1px solid #ddd", backgroundColor: "#f9f9f9"
+                width: "100%",
+                maxHeight: "500px",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "12px",
+                border: "1px solid #ddd",
+                backgroundColor: "#f9f9f9"
               }}>
                 <img
                   src={product.image_url}
                   alt={product.name}
                   loading="lazy"
                   style={{
-                    maxHeight: "350px", maxWidth: "350px", objectFit: "contain"
+                    maxHeight: "350px",
+                    maxWidth: "350px",
+                    objectFit: "contain"
                   }}
                 />
               </div>
@@ -86,32 +94,29 @@ const ProductDetail = () => {
             <div className="right-content">
               <h4>{product.name}</h4>
               <span className="price">Ksh. {product.price}</span>
-              <ul className="stars">
-                {[...Array(5)].map((_, i) => (
-                  <li key={i}><i className="fa fa-star"></i></li>
-                ))}
-              </ul>
-              <span>{product.description || "No description available."}</span>
+              <span className="d-block mt-2">{product.description || "No description available."}</span>
 
-              <div className="quote">
+              <div className="quote mt-3">
                 <i className="fa fa-quote-left"></i>
                 <p>Great products with quality craftsmanship and fine materials.</p>
               </div>
 
-              <div className="quantity-content">
+              <div className="quantity-content mt-4">
                 <div className="left-content">
                   <h6>No. of Orders</h6>
                 </div>
                 <div className="right-content">
                   <div className="quantity buttons_added">
                     <input
-                      type="button" value="-"
+                      type="button"
+                      value="-"
                       className="minus"
                       style={btnStyle}
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     />
                     <input
-                      type="number" value={quantity}
+                      type="number"
+                      value={quantity}
                       onChange={(e) =>
                         setQuantity(Math.max(1, parseInt(e.target.value) || 1))
                       }
@@ -120,7 +125,8 @@ const ProductDetail = () => {
                       style={qtyStyle}
                     />
                     <input
-                      type="button" value="+"
+                      type="button"
+                      value="+"
                       className="plus"
                       style={btnStyle}
                       onClick={() => setQuantity(q => q + 1)}
@@ -129,9 +135,9 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              <div className="total mt-3">
+              <div className="total mt-4">
                 <h4>Total: Ksh. {(product.price * quantity).toFixed(2)}</h4>
-                <div className="main-border-button">
+                <div className="main-border-button mt-2">
                   <button className="btn btn-primary" onClick={handleAddToCart}>
                     Add To Cart
                   </button>
@@ -142,15 +148,25 @@ const ProductDetail = () => {
         </div>
       </div>
 
+      {/* Modal popup */}
       {showPopup && (
-        <div className="modal fade show" tabIndex="-1" style={{
-          display: "block", backgroundColor: "rgba(0, 0, 0, 0.5)"
-        }}>
+        <div
+          className="modal fade show"
+          tabIndex="-1"
+          style={{
+            display: "block",
+            backgroundColor: "rgba(0, 0, 0, 0.5)"
+          }}
+        >
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Product Added to Cart</h5>
-                <button type="button" className="btn-close" onClick={() => setShowPopup(false)} />
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowPopup(false)}
+                />
               </div>
               <div className="modal-body">
                 <p>What would you like to do next?</p>

@@ -3,6 +3,7 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { CartContext } from "../components/CartContext";
 
+// Normalize image URL
 const getImageUrl = (image) => {
   if (!image) return "";
   if (image.startsWith("http://") || image.startsWith("https://")) return image;
@@ -32,14 +33,14 @@ const ItemsForHireDetails = () => {
   const handleAddToCart = () => {
     if (!item || !item.id) return;
 
+    const total = (
+      hours * parseFloat(item.hire_price_per_hour || 0) +
+      days * parseFloat(item.hire_price_per_day || 0)
+    ).toFixed(2);
+
     const existingIndex = cartItems.findIndex(
       (cartItem) => cartItem.id === item.id && cartItem.type === "hire"
     );
-
-    const total = (
-      hours * parseFloat(item.hire_price_per_hour) +
-      days * parseFloat(item.hire_price_per_day)
-    ).toFixed(2);
 
     let updatedCart;
 
@@ -169,8 +170,8 @@ const ItemsForHireDetails = () => {
                 <h4>
                   Total: Ksh.{" "}
                   {(
-                    hours * parseFloat(item.hire_price_per_hour) +
-                    days * parseFloat(item.hire_price_per_day)
+                    hours * parseFloat(item.hire_price_per_hour || 0) +
+                    days * parseFloat(item.hire_price_per_day || 0)
                   ).toFixed(2)}
                 </h4>
                 <div className="main-border-button mt-2">
