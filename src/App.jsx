@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Banner from './components/Banner';
 import ProductList from './components/ProductList';
@@ -11,7 +12,6 @@ import Socials from './components/Socials';
 import Footer from './components/Footer';
 import SearchResults from './components/SearchResults';
 import Confirmation from './components/Confirmation';
-import './App.css';
 import PaymentRedirect from "./components/PaymentRedirect";
 import { CartProvider } from './components/CartContext';
 import { AuthProvider } from './components/AuthContext';
@@ -19,14 +19,15 @@ import Home from './components/Home';
 import Courier from "./components/Courier";
 import ItemsForHire from "./components/ItemsForHire";
 import ItemsForHireDetails from "./components/ItemsForHireDetails";
-import Preloader from './components/Preloader'; // 👈 Import your Lottie preloader
-import React, { useState, useEffect } from 'react';
+import './App.css';
+import Admin from './components/Admin';
+import './components/styles.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading delay (e.g., for fetching initial data or assets)
+    // Simulate loading delay
     const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
@@ -35,13 +36,19 @@ function App() {
     <Router>
       <CartProvider>
         <AuthProvider>
-          {loading ? <Preloader /> : <AppContent />}
+          {loading ? (
+            <div className="loader">
+              <div className="spinner"></div>
+            </div>
+          ) : (
+            <AppContent />
+          )}
         </AuthProvider>
       </CartProvider>
     </Router>
   );
 }
-
+//----------------------------------------------------------------------------------------------------
 function AppContent() {
   const location = useLocation();
 
@@ -57,13 +64,13 @@ function AppContent() {
     '/checkout/confirmation/',
     '/order-success/',
     '/payment-redirect',
+    '/admin' // New Path
   ].some(path => location.pathname.startsWith(path));
 
   return (
     <>
       <Header />
       {!hideBanner && <Banner />}
-
       <main style={{ paddingTop: '100px', minHeight: '100vh' }}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -80,9 +87,9 @@ function AppContent() {
           <Route path="/order-success/:orderId" element={<PaymentRedirect />} />
           <Route path="/hire-items" element={<ItemsForHire />} />
           <Route path="/hire-item/:id" element={<ItemsForHireDetails />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
-
       <Socials />
       <Footer />
     </>
