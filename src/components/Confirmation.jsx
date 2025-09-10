@@ -165,18 +165,22 @@ const Confirmation = () => {
                   }
 
                   return (
-                    <div className="basket-line row py-2 align-items-center" key={item.id}>
-                      <div className="col-7 d-flex align-items-center">
+                    <div className="basket-line row py-3 align-items-center border-bottom" key={item.id}>
+                      <div className="col-12 col-md-7 d-flex flex-wrap align-items-center">
                         <img
                           src={image}
                           alt={name}
-                          className="img-thumbnail me-2"
-                          style={{ width: "70px" }}
+                          className="img-thumbnail me-3 mb-2"
+                          style={{ width: "70px", height: "70px", objectFit: "cover" }}
                         />
                         <h6 className="mb-0">{name}</h6>
                       </div>
-                      <div className="col-2 text-end">{quantityDisplay}</div>
-                      <div className="col-3 text-end">KES {itemTotal}</div>
+                      <div className="col-6 col-md-2 text-start text-md-end mt-2 mt-md-0">
+                        <small>{quantityDisplay}</small>
+                      </div>
+                      <div className="col-6 col-md-3 text-start text-md-end mt-2 mt-md-0">
+                        <strong>KES {itemTotal}</strong>
+                      </div>
                     </div>
                   );
                 })}

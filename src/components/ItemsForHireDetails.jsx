@@ -87,17 +87,17 @@ const ItemsForHireDetails = () => {
     <section className="section" id="hire-item">
       <div className="container">
         <div className="row">
-          {/* Image */}
-          <div className="col-lg-8">
-            <div className="left-images">
+          {/* Image with Icons */}
+          <div className="col-lg-8 mb-4">
+            <div className="position-relative" style={{ width: "100%", maxHeight: "500px" }}>
               <div
                 style={{
                   width: "100%",
-                  maxHeight: "500px",
-                  overflow: "hidden",
+                  height: "390px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  overflow: "hidden",
                   borderRadius: "12px",
                   border: "1px solid #ddd",
                   backgroundColor: "#f9f9f9",
@@ -113,6 +113,37 @@ const ItemsForHireDetails = () => {
                     objectFit: "contain",
                   }}
                 />
+              </div>
+
+              {/* Floating Icons */}
+              <div
+                className="position-absolute top-0 end-0 p-2 d-flex flex-column align-items-center"
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.85)",
+                  borderRadius: "0 0 0.5rem 0.5rem",
+                  zIndex: 2,
+                }}
+              >
+                <button
+                  className="btn btn-sm btn-outline-dark mb-2"
+                  title="View Details"
+                  onClick={() => navigate(`/hire-item/${item.id}`)}
+                >
+                  <i className="fa fa-eye"></i>
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-dark mb-2"
+                  title="Add to Favorites"
+                >
+                  <i className="fa fa-heart"></i>
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-dark"
+                  title="Add to Cart"
+                  onClick={handleAddToCart}
+                >
+                  <i className="fa fa-shopping-cart"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -175,7 +206,7 @@ const ItemsForHireDetails = () => {
                   ).toFixed(2)}
                 </h4>
                 <div className="main-border-button mt-2">
-                  <button className="btn btn-primary" onClick={handleAddToCart}>
+                  <button className="btn btn-primary w-100" onClick={handleAddToCart}>
                     Book
                   </button>
                 </div>
