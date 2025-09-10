@@ -1,6 +1,6 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useCart } from './CartContext';
+import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -24,9 +24,9 @@ const Cart = () => {
   };
 
   const handleCheckout = () => {
-    navigate('/checkout/shipping-address');
+    navigate('/checkout/shipping-address'); 
   };
-
+  
   return (
     <div className="container mt-5">
       <h2>Your Cart</h2>
