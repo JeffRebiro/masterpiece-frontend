@@ -18,7 +18,8 @@ const ItemsForHireDetails = () => {
   const [days, setDays] = useState(0);
   const [showPopup, setShowPopup] = useState(false);
 
-  const { cartItems, setCartItems } = useContext(CartContext);
+  // Use the useCart hook to access the context functions
+  const { addToCart } = useContext(CartContext);
 
   useEffect(() => {
     axios
@@ -32,41 +33,14 @@ const ItemsForHireDetails = () => {
   const handleAddToCart = () => {
     if (!item || !item.id) return;
 
-    const existingIndex = cartItems.findIndex(
-      (cartItem) => cartItem.id === item.id && cartItem.type === "hire"
-    );
-
-    const total = (
-      hours * parseFloat(item.hire_price_per_hour) +
-      days * parseFloat(item.hire_price_per_day)
-    ).toFixed(2);
-
-    let updatedCart;
-
-    if (existingIndex !== -1) {
-      updatedCart = [...cartItems];
-      updatedCart[existingIndex].hours += hours;
-      updatedCart[existingIndex].days += days;
-      updatedCart[existingIndex].total = (
-        parseFloat(updatedCart[existingIndex].total) + parseFloat(total)
-      ).toFixed(2);
-    } else {
-      updatedCart = [
-        ...cartItems,
-        {
-          id: item.id,
-          name: item.name,
-          image: item.image_url,
-          hours,
-          days,
-          total,
-          type: "hire",
-        },
-      ];
-    }
-
-    setCartItems(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    // Use the addToCart function from CartContext to add the hire item
+    addToCart(item, 1, { 
+      hours: hours, 
+      days: days, 
+      hire_price_per_hour: item.hire_price_per_hour,
+      hire_price_per_day: item.hire_price_per_day 
+    });
+    
     setShowPopup(true);
   };
 
