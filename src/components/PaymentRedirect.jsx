@@ -8,7 +8,10 @@ const PaymentRedirect = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { jwtToken } = useAuth();
+
   const [phone, setPhone] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [amount, setAmount] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +55,13 @@ const PaymentRedirect = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${jwtToken}`,
         },
-        body: JSON.stringify({ phone, amount }),
+        body: JSON.stringify({
+          phone,
+          first_name: firstName,
+          last_name: lastName,
+          amount,
+          order_id: orderId,
+        }),
       });
 
       if (!response.ok) {
@@ -83,6 +92,26 @@ const PaymentRedirect = () => {
       <h3>Total Amount: KES {amount}</h3>
 
       <form className="mt-4" onSubmit={handlePayment}>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-3">
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+          />
+        </div>
         <div className="mb-3">
           <input
             type="text"
