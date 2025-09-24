@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import './Admin.css';
 
-const API_BASE_URL = 'https://e-commerce-backend-7yft.onrender.com/api';
+const API_BASE_URL = 'https://e-commerce-backend-7yft.onrender.com';
 
 const Admin = () => {
-    const [currentView, setCurrentView] = useState('login');
     const [user, setUser] = useState(null);
     const [models, setModels] = useState([]);
     const [selectedModel, setSelectedModel] = useState(null);
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [csrfToken, setCsrfToken] = useState('');
 
     // Login form state
     const [loginForm, setLoginForm] = useState({
@@ -18,101 +19,45 @@ const Admin = () => {
         password: ''
     });
 
-    // Register form state
-    const [registerForm, setRegisterForm] = useState({
-        username: '',
-        email: '',
-        password: '',
-        password2: ''
-    });
-
-    // Check if user is already logged in
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        const userData = localStorage.getItem('user');
-        if (token && userData) {
-            setUser(JSON.parse(userData));
-            setCurrentView('dashboard');
-            fetchModels();
-        }
-    }, []);
-
-    const fetchWithAuth = async (url, options = {}) => {
-        const token = localStorage.getItem('token');
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers
-        };
-
-        if (token) {
-            headers['Authorization'] = `Token ${token}`;
-        }
-
-        const response = await fetch(`${API_BASE_URL}${url}`, {
-            ...options,
-            headers
-        });
-
-        if (response.status === 401) {
-            logout();
-            throw new Error('Authentication failed');
-        }
-
-        return response;
+    // Get CSRF token from cookies
+    const getCsrfToken = () => {
+        const name = 'csrftoken';
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith(name + '='))
+            ?.split('=')[1];
+        return cookieValue || '';
     };
 
-    const fetchModels = async () => {
+    // Check if user is authenticated
+    const checkAuthentication = async () => {
         try {
-            setLoading(true);
-            // Since we don't have a specific models endpoint, we'll try common ones
-            const endpoints = [
-                'products/',
-                'categories/',
-                'users/',
-                'orders/'
-            ];
-
-            const availableModels = [];
-            
-            for (const endpoint of endpoints) {
-                try {
-                    const response = await fetchWithAuth(`/${endpoint}`);
-                    if (response.ok) {
-                        availableModels.push({
-                            name: endpoint.replace('/', ''),
-                            endpoint: endpoint
-                        });
-                    }
-                } catch (err) {
-                    // Endpoint might not exist, continue to next
+            const response = await fetch(`${API_BASE_URL}/admin/`, {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
                 }
-            }
+            });
 
-            setModels(availableModels);
-        } catch (err) {
-            setError('Failed to fetch models: ' + err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchModelItems = async (model) => {
-        try {
-            setLoading(true);
-            setSelectedModel(model);
-            const response = await fetchWithAuth(`/${model.endpoint}`);
             if (response.ok) {
                 const data = await response.json();
-                setItems(Array.isArray(data) ? data : [data]);
-            } else {
-                setError('Failed to fetch items');
+                setIsLoggedIn(true);
+                setUser(data.user);
+                fetchModels();
+                return true;
             }
-        } catch (err) {
-            setError('Failed to fetch items: ' + err.message);
-        } finally {
-            setLoading(false);
+            return false;
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            return false;
         }
     };
+
+    useEffect(() => {
+        setCsrfToken(getCsrfToken());
+        checkAuthentication();
+    }, []);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -120,24 +65,38 @@ const Admin = () => {
         setError('');
 
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(loginForm)
+            // First, get the login page to set CSRF token
+            await fetch(`${API_BASE_URL}/admin/login/`, {
+                credentials: 'include'
             });
 
-            const data = await response.json();
+            const formData = new FormData();
+            formData.append('username', loginForm.username);
+            formData.append('password', loginForm.password);
+            formData.append('csrfmiddlewaretoken', getCsrfToken());
+
+            const response = await fetch(`${API_BASE_URL}/admin/login/`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
 
             if (response.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-                setUser(data.user);
-                setCurrentView('dashboard');
-                fetchModels();
+                const result = await response.json();
+                if (result.authenticated) {
+                    setIsLoggedIn(true);
+                    setUser({ username: loginForm.username });
+                    setLoginForm({ username: '', password: '' });
+                    fetchModels();
+                } else {
+                    setError(result.error || 'Invalid credentials');
+                }
             } else {
-                setError(data.message || 'Login failed');
+                setError('Login failed. Please check your credentials.');
             }
         } catch (err) {
             setError('Network error: ' + err.message);
@@ -146,179 +105,136 @@ const Admin = () => {
         }
     };
 
-    const handleRegister = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
-        if (registerForm.password !== registerForm.password2) {
-            setError('Passwords do not match');
-            setLoading(false);
-            return;
-        }
-
+    const handleLogout = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+            await fetch(`${API_BASE_URL}/admin/logout/`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: registerForm.username,
-                    email: registerForm.email,
-                    password: registerForm.password
-                })
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': getCsrfToken(),
+                }
+            });
+        } catch (err) {
+            console.error('Logout error:', err);
+        } finally {
+            setIsLoggedIn(false);
+            setUser(null);
+            setModels([]);
+            setItems([]);
+        }
+    };
+
+    const fetchModels = async () => {
+        try {
+            setLoading(true);
+            // Try to fetch admin index to get available models
+            const response = await fetch(`${API_BASE_URL}/admin/`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
             });
 
-            const data = await response.json();
-
             if (response.ok) {
-                setError('Registration successful! Please login.');
-                setCurrentView('login');
-                setRegisterForm({
-                    username: '',
-                    email: '',
-                    password: '',
-                    password2: ''
-                });
-            } else {
-                setError(data.message || 'Registration failed');
+                const data = await response.json();
+                if (data.app_list) {
+                    const modelList = [];
+                    data.app_list.forEach(app => {
+                        app.models.forEach(model => {
+                            modelList.push({
+                                name: model.name,
+                                object_name: model.object_name,
+                                app_label: app.app_label,
+                                admin_url: model.admin_url
+                            });
+                        });
+                    });
+                    setModels(modelList);
+                }
             }
         } catch (err) {
-            setError('Network error: ' + err.message);
+            console.error('Failed to fetch models:', err);
         } finally {
             setLoading(false);
         }
     };
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setUser(null);
-        setCurrentView('login');
-        setModels([]);
-        setItems([]);
-    };
-
-    const deleteItem = async (itemId) => {
-        if (!window.confirm('Are you sure you want to delete this item?')) {
-            return;
-        }
-
+    const fetchModelData = async (model) => {
         try {
-            const response = await fetchWithAuth(`/${selectedModel.endpoint}${itemId}/`, {
-                method: 'DELETE'
+            setLoading(true);
+            setSelectedModel(model);
+            
+            // Fetch the changelist for the model
+            const response = await fetch(`${API_BASE_URL}${model.admin_url}`, {
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
             });
 
             if (response.ok) {
-                setItems(items.filter(item => item.id !== itemId));
-            } else {
-                setError('Failed to delete item');
+                const data = await response.json();
+                if (data.results) {
+                    setItems(data.results);
+                } else {
+                    setItems([]);
+                }
             }
         } catch (err) {
-            setError('Failed to delete item: ' + err.message);
+            setError('Failed to fetch model data: ' + err.message);
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (currentView === 'login') {
+    if (!isLoggedIn) {
         return (
-            <div className="admin-login">
-                <div className="login-container">
-                    <h1>Django Administration</h1>
-                    <form onSubmit={handleLogin}>
-                        <div className="form-group">
-                            <label htmlFor="username">Username:</label>
-                            <input
-                                type="text"
-                                id="username"
-                                value={loginForm.username}
-                                onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="password">Password:</label>
-                            <input
-                                type="password"
-                                id="password"
-                                value={loginForm.password}
-                                onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                                required
-                            />
-                        </div>
-                        {error && <div className="error">{error}</div>}
-                        <button type="submit" disabled={loading}>
-                            {loading ? 'Logging in...' : 'Log in'}
-                        </button>
-                    </form>
-                    <p>
-                        Don't have an account? 
-                        <span className="link" onClick={() => setCurrentView('register')}>
-                            Register here
-                        </span>
-                    </p>
+            <div className="django-admin">
+                <div className="admin-header">
+                    <div className="admin-brand">
+                        <h1>Django administration</h1>
+                    </div>
                 </div>
-            </div>
-        );
-    }
-
-    if (currentView === 'register') {
-        return (
-            <div className="admin-login">
+                
                 <div className="login-container">
-                    <h1>Django Administration - Register</h1>
-                    <form onSubmit={handleRegister}>
-                        <div className="form-group">
-                            <label htmlFor="reg-username">Username:</label>
-                            <input
-                                type="text"
-                                id="reg-username"
-                                value={registerForm.username}
-                                onChange={(e) => setRegisterForm({...registerForm, username: e.target.value})}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="reg-email">Email:</label>
-                            <input
-                                type="email"
-                                id="reg-email"
-                                value={registerForm.email}
-                                onChange={(e) => setRegisterForm({...registerForm, email: e.target.value})}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="reg-password">Password:</label>
-                            <input
-                                type="password"
-                                id="reg-password"
-                                value={registerForm.password}
-                                onChange={(e) => setRegisterForm({...registerForm, password: e.target.value})}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="reg-password2">Confirm Password:</label>
-                            <input
-                                type="password"
-                                id="reg-password2"
-                                value={registerForm.password2}
-                                onChange={(e) => setRegisterForm({...registerForm, password2: e.target.value})}
-                                required
-                            />
-                        </div>
-                        {error && <div className="error">{error}</div>}
-                        <button type="submit" disabled={loading}>
-                            {loading ? 'Registering...' : 'Register'}
-                        </button>
-                    </form>
-                    <p>
-                        Already have an account? 
-                        <span className="link" onClick={() => setCurrentView('login')}>
-                            Login here
-                        </span>
-                    </p>
+                    <div className="login-form">
+                        <h2>Log in</h2>
+                        <form onSubmit={handleLogin}>
+                            <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken} />
+                            <div className="form-row">
+                                <label htmlFor="id_username">Username:</label>
+                                <input
+                                    type="text"
+                                    name="username"
+                                    id="id_username"
+                                    value={loginForm.username}
+                                    onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="form-row">
+                                <label htmlFor="id_password">Password:</label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    id="id_password"
+                                    value={loginForm.password}
+                                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                                    required
+                                />
+                            </div>
+                            {error && <div className="errornote">{error}</div>}
+                            <div className="submit-row">
+                                <button type="submit" disabled={loading}>
+                                    {loading ? 'Logging in...' : 'Log in'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         );
@@ -333,7 +249,7 @@ const Admin = () => {
                 </div>
                 <div className="admin-user">
                     Welcome, <strong>{user?.username}</strong> | 
-                    <span className="logout-link" onClick={logout}>Log out</span>
+                    <span className="logout-link" onClick={handleLogout}>Log out</span>
                 </div>
             </div>
 
@@ -342,23 +258,15 @@ const Admin = () => {
                 {/* Sidebar */}
                 <div className="admin-sidebar">
                     <div className="sidebar-section">
-                        <h3>Authentication and Authorization</h3>
-                        <ul>
-                            <li>Users</li>
-                            <li>Groups</li>
-                        </ul>
-                    </div>
-                    
-                    <div className="sidebar-section">
                         <h3>MODELS</h3>
                         <ul>
-                            {models.map((model) => (
+                            {models.map((model, index) => (
                                 <li 
-                                    key={model.name}
-                                    className={selectedModel?.name === model.name ? 'active' : ''}
-                                    onClick={() => fetchModelItems(model)}
+                                    key={index}
+                                    className={selectedModel?.object_name === model.object_name ? 'active' : ''}
+                                    onClick={() => fetchModelData(model)}
                                 >
-                                    {model.name.charAt(0).toUpperCase() + model.name.slice(1)}
+                                    {model.name}
                                 </li>
                             ))}
                         </ul>
@@ -368,7 +276,7 @@ const Admin = () => {
                 {/* Content Area */}
                 <div className="admin-content">
                     {loading && <div className="loading">Loading...</div>}
-                    {error && <div className="error-message">{error}</div>}
+                    {error && <div className="errornote">{error}</div>}
 
                     {!selectedModel ? (
                         <div className="dashboard">
@@ -381,41 +289,45 @@ const Admin = () => {
                     ) : (
                         <div className="model-view">
                             <div className="model-header">
-                                <h2>Select {selectedModel.name.slice(0, -1)} to change</h2>
-                                <button className="add-button">Add {selectedModel.name.slice(0, -1)}</button>
+                                <h2>Select {selectedModel.name} to change</h2>
+                                <button className="add-button">
+                                    Add {selectedModel.name}
+                                </button>
                             </div>
                             
                             <div className="model-content">
-                                <table className="model-table">
-                                    <thead>
-                                        <tr>
-                                            {items.length > 0 && Object.keys(items[0]).map(key => (
-                                                <th key={key}>{key}</th>
-                                            ))}
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {items.map((item, index) => (
-                                            <tr key={item.id || index}>
-                                                {Object.values(item).map((value, idx) => (
-                                                    <td key={idx}>
-                                                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                                                    </td>
+                                {items.length > 0 ? (
+                                    <table className="model-table">
+                                        <thead>
+                                            <tr>
+                                                {Object.keys(items[0]).map(key => (
+                                                    <th key={key}>{key}</th>
                                                 ))}
-                                                <td className="actions">
-                                                    <button className="change-btn">Change</button>
-                                                    <button 
-                                                        className="delete-btn"
-                                                        onClick={() => deleteItem(item.id)}
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </td>
+                                                <th>Actions</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((item, index) => (
+                                                <tr key={index}>
+                                                    {Object.values(item).map((value, idx) => (
+                                                        <td key={idx}>
+                                                            {typeof value === 'object' ? 
+                                                                JSON.stringify(value) : 
+                                                                String(value)
+                                                            }
+                                                        </td>
+                                                    ))}
+                                                    <td className="actions">
+                                                        <button className="change-btn">Change</button>
+                                                        <button className="delete-btn">Delete</button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <p>No items found.</p>
+                                )}
                             </div>
                         </div>
                     )}

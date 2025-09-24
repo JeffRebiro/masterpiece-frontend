@@ -1,7 +1,7 @@
 /* Django Admin Theme */
 .django-admin {
     font-family: "Roboto", "Lucida Grande", Verdana, Arial, sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.4;
     color: #333;
     background: #f8f8f8;
@@ -39,6 +39,94 @@
 
 .logout-link:hover {
     color: #f5dd5d;
+}
+
+/* Login Container */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 60px);
+    padding: 20px;
+}
+
+.login-form {
+    background: white;
+    padding: 30px;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+}
+
+.login-form h2 {
+    margin: 0 0 20px 0;
+    padding: 0;
+    font-weight: 300;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    display: block;
+    margin-bottom: 5px;
+    color: #666;
+    font-weight: 500;
+}
+
+.form-row input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.form-row input:focus {
+    border-color: #79aec8;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(121, 174, 200, 0.2);
+}
+
+.submit-row {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.submit-row button {
+    background: #417690;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+}
+
+.submit-row button:hover:not(:disabled) {
+    background: #366477;
+}
+
+.submit-row button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.errornote {
+    background: #ffefef;
+    color: #ba2121;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border: 1px solid #ba2121;
+    font-size: 13px;
 }
 
 /* Main Container */
@@ -131,7 +219,7 @@
     color: white;
     border: none;
     padding: 8px 15px;
-    border-radius: 3px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 13px;
 }
@@ -203,113 +291,13 @@
     background: #a41515;
 }
 
-/* Login/Register Styles */
-.admin-login {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: #f8f8f8;
-}
-
-.login-container {
-    background: white;
-    padding: 30px;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    width: 400px;
-}
-
-.login-container h1 {
-    color: #417690;
-    text-align: center;
-    margin-bottom: 30px;
-    font-weight: 300;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    color: #666;
-    font-weight: 500;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    border-radius: 3px;
-    font-size: 14px;
-    box-sizing: border-box;
-}
-
-.form-group input:focus {
-    border-color: #79aec8;
-    outline: none;
-}
-
-button[type="submit"] {
-    width: 100%;
-    padding: 10px;
-    background: #417690;
-    color: white;
-    border: none;
-    border-radius: 3px;
-    font-size: 14px;
-    cursor: pointer;
-    margin-top: 10px;
-}
-
-button[type="submit"]:hover:not(:disabled) {
-    background: #366477;
-}
-
-button[type="submit"]:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.error {
-    color: #ba2121;
-    background: #ffefef;
-    padding: 10px;
-    border-radius: 3px;
-    margin-bottom: 15px;
-    border: 1px solid #ba2121;
-}
-
-.link {
-    color: #417690;
-    text-decoration: underline;
-    cursor: pointer;
-    margin-left: 5px;
-}
-
-.link:hover {
-    color: #366477;
-}
-
-/* Loading and Error Messages */
 .loading {
     text-align: center;
     padding: 20px;
     color: #666;
 }
 
-.error-message {
-    background: #ffefef;
-    color: #ba2121;
-    padding: 10px;
-    border-radius: 3px;
-    margin-bottom: 20px;
-    border: 1px solid #ba2121;
-}
-
-/* Responsive Design */
+/* Responsive */
 @media (max-width: 768px) {
     .admin-container {
         flex-direction: column;
@@ -323,10 +311,5 @@ button[type="submit"]:disabled {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
-    }
-    
-    .login-container {
-        width: 90%;
-        margin: 20px;
     }
 }
