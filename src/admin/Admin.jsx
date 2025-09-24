@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Login from './AdLogin';
+import Login from './AdminLogin';
 import Register from './Register';
 import CRUDTable from './CRUDTable';
 
