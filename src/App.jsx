@@ -20,14 +20,18 @@ import Courier from "./components/Courier";
 import ItemsForHire from "./components/ItemsForHire";
 import ItemsForHireDetails from "./components/ItemsForHireDetails";
 import './App.css';
-import Admin from './components/Admin';
-import './components/Admin.css';
+
+// ✅ Admin imports
+import Admin from './admin/Admin';
+import Dashboard from './admin/Dashboard';
+import CRUDTable from './admin/CRUDTable';
+import AdminLogin from './admin/Login';
+import AdminRegister from './admin/Register';
 
 function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading delay
     const timer = setTimeout(() => setLoading(false), 2000);
     return () => clearTimeout(timer);
   }, []);
@@ -48,7 +52,9 @@ function App() {
     </Router>
   );
 }
-//----------------------------------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------------------------------
+
 function AppContent() {
   const location = useLocation();
 
@@ -64,7 +70,7 @@ function AppContent() {
     '/checkout/confirmation/',
     '/order-success/',
     '/payment-redirect',
-    '/admin' // New Path
+    '/admin'
   ].some(path => location.pathname.startsWith(path));
 
   return (
@@ -73,6 +79,7 @@ function AppContent() {
       {!hideBanner && <Banner />}
       <main style={{ paddingTop: '100px', minHeight: '100vh' }}>
         <Routes>
+          {/* Existing routes */}
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<ProductList />} />
           <Route path="/product/:id" element={<ProductDetail />} />
@@ -87,7 +94,17 @@ function AppContent() {
           <Route path="/order-success/:orderId" element={<PaymentRedirect />} />
           <Route path="/hire-items" element={<ItemsForHire />} />
           <Route path="/hire-item/:id" element={<ItemsForHireDetails />} />
+
+          {/* ✅ Admin routes */}
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/dashboard" element={<Dashboard />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/register" element={<AdminRegister />} />
+          <Route path="/admin/products" element={<CRUDTable endpoint="products" />} />
+          <Route path="/admin/categories" element={<CRUDTable endpoint="categories" />} />
+          <Route path="/admin/hire-items" element={<CRUDTable endpoint="hire-items" />} />
+          <Route path="/admin/guest-users" element={<CRUDTable endpoint="guest-users" />} />
+          <Route path="/admin/shipping-addresses" element={<CRUDTable endpoint="shipping-addresses" />} />
         </Routes>
       </main>
       <Socials />
