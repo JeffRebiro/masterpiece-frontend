@@ -21,7 +21,7 @@ import ItemsForHire from "./components/ItemsForHire";
 import ItemsForHireDetails from "./components/ItemsForHireDetails";
 import './App.css';
 import Admin from './components/Admin';
-import './components/styles.css';
+import './components/Admin.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
