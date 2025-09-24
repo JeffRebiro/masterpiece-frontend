@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { login } from './api';
 
-export default function AdLogin({ setToken }) {
+export default function AdminLogin({ setToken }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 

@@ -25,7 +25,7 @@ import './App.css';
 import Admin from './admin/Admin';
 import Dashboard from './admin/Dashboard';
 import CRUDTable from './admin/CRUDTable';
-import AdminLogin from './admin/Login';
+import AdminLogin from './admin/AdminLogin';
 import AdminRegister from './admin/Register';
 
 function App() {
