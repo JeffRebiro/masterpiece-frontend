@@ -15,6 +15,8 @@ const Admin = () => {
   const [creatingItem, setCreatingItem] = useState(false);
   const [viewingItem, setViewingItem] = useState(null);
   const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
+  const [imageFile, setImageFile] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Form states
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
@@ -29,25 +31,31 @@ const Admin = () => {
       name: 'Products',
       endpoint: 'products',
       url: `${API_BASE_URL}/products/`,
-      fields: ['id', 'name', 'price', 'description', 'category', 'image_url']
+      fields: ['id', 'name', 'price', 'description', 'category', 'image_url'],
+      hasImage: true,
+      cloudinaryFolder: 'products'
     },
     {
       name: 'Categories',
       endpoint: 'categories',
       url: `${API_BASE_URL}/categories/`,
-      fields: ['id', 'name', 'slug']
+      fields: ['id', 'name', 'slug'],
+      hasImage: false
     },
     {
       name: 'Guest Users',
       endpoint: 'guest-users',
       url: `${API_BASE_URL}/guest-users/`,
-      fields: ['id', 'email', 'first_name', 'last_name', 'phone', 'subscribed', 'is_active']
+      fields: ['id', 'email', 'first_name', 'last_name', 'phone', 'subscribed', 'is_active'],
+      hasImage: false
     },
     {
       name: 'Hire Items',
       endpoint: 'hire-items',
       url: `${API_BASE_URL}/hire-items/`,
-      fields: ['id', 'name', 'hire_price_per_day', 'hire_price_per_hour', 'image_url', 'details']
+      fields: ['id', 'name', 'hire_price_per_day', 'hire_price_per_hour', 'image_url', 'details'],
+      hasImage: true,
+      cloudinaryFolder: 'hire_items'
     },
     {
       name: 'Courier Orders',
@@ -71,7 +79,8 @@ const Admin = () => {
         'recipient_name',
         'recipient_phone',
         'delivery_location'
-      ]
+      ],
+      hasImage: false
     }
   ];
 
@@ -121,6 +130,53 @@ const Admin = () => {
       'Content-Type': 'application/json',
       Authorization: token ? `Bearer ${token}` : ''
     };
+  };
+
+  const getImageUploadHeaders = () => {
+    const token = localStorage.getItem('authToken');
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  };
+
+  const uploadImageToCloudinary = async (file) => {
+    try {
+      setUploadingImage(true);
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      // Use the specific folder for the model
+      const folder = selectedModel?.cloudinaryFolder || 'general';
+      formData.append('folder', folder);
+
+      const response = await fetch(`${API_BASE_URL}/upload-image/`, {
+        method: 'POST',
+        headers: getImageUploadHeaders(),
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Cloudinary upload response:', data);
+        
+        // Verify the URL format matches your desired pattern
+        if (data.url && data.url.includes('res.cloudinary.com/masterpieceempire/image/upload/')) {
+          return data.url;
+        } else {
+          console.warn('URL format may not match expected pattern:', data.url);
+          return data.url; // Still return it, but log warning
+        }
+      } else {
+        const errorText = await response.text();
+        throw new Error(`Image upload failed: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setError('Failed to upload image: ' + error.message);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const fetchModelData = async (model) => {
@@ -189,21 +245,46 @@ const Admin = () => {
     setSelectedModel(null);
     setItems([]);
     setError('');
+    setImageFile(null);
   };
 
   const createItem = async (formData) => {
     try {
       setLoading(true);
+      
+      // If there's an image file, upload it first
+      let imageUrl = formData.image_url;
+      if (imageFile) {
+        imageUrl = await uploadImageToCloudinary(imageFile);
+        if (!imageUrl) {
+          setError('Image upload failed. Item not created.');
+          setLoading(false);
+          return;
+        }
+        console.log('Image uploaded successfully. URL:', imageUrl);
+      }
+
+      // Prepare the data for API call
+      const itemData = { ...formData };
+      if (imageUrl) {
+        itemData.image_url = imageUrl;
+      }
+
+      // Remove image file from data since it's handled separately
+      delete itemData.image;
+
       const response = await fetch(selectedModel.url, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(formData)
+        body: JSON.stringify(itemData)
       });
+
       if (response.ok) {
         const newItem = await response.json();
         setItems([...items, newItem]);
         setCreatingItem(false);
         setItemForm({});
+        setImageFile(null);
         setError('Item created successfully!');
         setTimeout(() => setError(''), 3000);
       } else if (response.status === 401) {
@@ -223,16 +304,40 @@ const Admin = () => {
   const updateItem = async (formData) => {
     try {
       setLoading(true);
+      
+      // If there's a new image file, upload it first
+      let imageUrl = formData.image_url;
+      if (imageFile) {
+        imageUrl = await uploadImageToCloudinary(imageFile);
+        if (!imageUrl) {
+          setError('Image upload failed. Item not updated.');
+          setLoading(false);
+          return;
+        }
+        console.log('Image uploaded successfully. URL:', imageUrl);
+      }
+
+      // Prepare the data for API call
+      const itemData = { ...formData };
+      if (imageUrl && imageUrl !== editingItem.image_url) {
+        itemData.image_url = imageUrl;
+      }
+
+      // Remove image file from data since it's handled separately
+      delete itemData.image;
+
       const response = await fetch(`${selectedModel.url}${editingItem.id}/`, {
         method: 'PUT',
         headers: getAuthHeaders(),
-        body: JSON.stringify(formData)
+        body: JSON.stringify(itemData)
       });
+
       if (response.ok) {
         const updatedItem = await response.json();
         setItems(items.map(item => item.id === editingItem.id ? updatedItem : item));
         setEditingItem(null);
         setItemForm({});
+        setImageFile(null);
         setError('Item updated successfully!');
         setTimeout(() => setError(''), 3000);
       } else if (response.status === 401) {
@@ -272,11 +377,36 @@ const Admin = () => {
   const handleEdit = (item) => {
     setEditingItem(item);
     setItemForm({ ...item });
+    setImageFile(null);
   };
 
   const handleCreate = () => {
     setCreatingItem(true);
     setItemForm({});
+    setImageFile(null);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file (JPEG, PNG, GIF, WEBP, etc.)');
+        return;
+      }
+      
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Image size should be less than 10MB');
+        return;
+      }
+      
+      setImageFile(file);
+      
+      // Create a preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setItemForm(prev => ({ ...prev, image_url: previewUrl }));
+    }
   };
 
   const handleFormSubmit = (e) => {
@@ -291,12 +421,81 @@ const Admin = () => {
 
   const renderFormField = (field) => {
     if (field === 'id' || field === 'created_at' || field === 'updated_at') return null;
+    
     const value = itemForm[field] || '';
+
+    // Special handling for image_url field
+    if (field === 'image_url' && selectedModel?.hasImage) {
+      const currentImageUrl = editingItem?.image_url;
+      
+      return (
+        <div key={field} className="form-row">
+          <label htmlFor={field}>IMAGE:</label>
+          <div className="image-upload-container">
+            {/* Current image preview */}
+            {currentImageUrl && !imageFile && (
+              <div className="current-image">
+                <p>Current Image:</p>
+                <img 
+                  src={currentImageUrl} 
+                  alt="Current" 
+                  style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }} 
+                />
+                <small>Current image (will be replaced if new image is selected)</small>
+              </div>
+            )}
+            
+            {/* New image upload */}
+            <div className="new-image-upload">
+              <label htmlFor="image-upload" className="upload-label">
+                Choose New Image
+              </label>
+              <input
+                type="file"
+                id="image-upload"
+                accept="image/*"
+                onChange={handleFileChange}
+                disabled={uploadingImage}
+                style={{ display: 'none' }}
+              />
+              
+              {imageFile && (
+                <div className="image-preview">
+                  <p>New Image Preview:</p>
+                  <img 
+                    src={URL.createObjectURL(imageFile)} 
+                    alt="Preview" 
+                    style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'cover' }} 
+                  />
+                  <small>Selected: {imageFile.name}</small>
+                </div>
+              )}
+              
+              {uploadingImage && (
+                <div className="uploading-text">
+                  <div className="upload-spinner"></div>
+                  Uploading image to Cloudinary...
+                </div>
+              )}
+            </div>
+            
+            <small className="format-info">
+              Supported formats: JPEG, PNG, GIF, WEBP. Max size: 10MB
+            </small>
+          </div>
+        </div>
+      );
+    }
+
     if (field === 'category' && selectedModel?.endpoint === 'products') {
       return (
         <div key={field} className="form-row">
           <label htmlFor={field}>CATEGORY:</label>
-          <select id={field} value={value} onChange={(e) => handleFormChange(field, e.target.value)}>
+          <select 
+            id={field} 
+            value={value} 
+            onChange={(e) => handleFormChange(field, e.target.value)}
+          >
             <option value="">-- Select a category --</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -305,6 +504,59 @@ const Admin = () => {
         </div>
       );
     }
+
+    // Handle numeric fields
+    if (field.includes('price') || field === 'delivery_fee' || field === 'total' || field === 'item_price') {
+      return (
+        <div key={field} className="form-row">
+          <label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}:</label>
+          <input
+            type="number"
+            id={field}
+            step="0.01"
+            min="0"
+            value={value}
+            onChange={(e) => handleFormChange(field, e.target.value)}
+            placeholder={`Enter ${field}`}
+          />
+        </div>
+      );
+    }
+
+    // Handle textarea for long text fields
+    if (field === 'description' || field === 'details' || field === 'notes') {
+      return (
+        <div key={field} className="form-row">
+          <label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}:</label>
+          <textarea
+            id={field}
+            value={value}
+            onChange={(e) => handleFormChange(field, e.target.value)}
+            placeholder={`Enter ${field}`}
+            rows={4}
+          />
+        </div>
+      );
+    }
+
+    // Handle boolean fields
+    if (field === 'subscribed' || field === 'is_active') {
+      return (
+        <div key={field} className="form-row">
+          <label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}:</label>
+          <select 
+            id={field} 
+            value={value} 
+            onChange={(e) => handleFormChange(field, e.target.value === 'true')}
+          >
+            <option value={true}>Yes</option>
+            <option value={false}>No</option>
+          </select>
+        </div>
+      );
+    }
+
+    // Default text input
     return (
       <div key={field} className="form-row">
         <label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}:</label>
@@ -414,12 +666,16 @@ const Admin = () => {
           {(creatingItem || editingItem) && selectedModel && (
             <div className="form-modal">
               <div className="form-container">
-                <h3>{editingItem ? 'Edit' : 'Add'} {selectedModel.name}</h3>
+                <h3>{editingItem ? 'Edit' : 'Add'} {selectedModel.name.slice(0, -1)}</h3>
                 <form onSubmit={handleFormSubmit}>
                   {selectedModel.fields.map(renderFormField)}
                   <div className="form-actions">
-                    <button type="submit" className="save-btn" disabled={loading}>
-                      {loading ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
+                    <button 
+                      type="submit" 
+                      className="save-btn" 
+                      disabled={loading || uploadingImage}
+                    >
+                      {loading || uploadingImage ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
                     </button>
                     <button
                       type="button"
@@ -428,8 +684,9 @@ const Admin = () => {
                         setEditingItem(null);
                         setCreatingItem(false);
                         setItemForm({});
+                        setImageFile(null);
                       }}
-                      disabled={loading}
+                      disabled={loading || uploadingImage}
                     >
                       Cancel
                     </button>
@@ -480,7 +737,7 @@ const Admin = () => {
                     <table className="model-table">
                       <thead>
                         <tr>
-                          <th>ID</th>
+                          <th>Image</th>
                           <th>Name/Title</th>
                           <th>Actions</th>
                         </tr>
@@ -489,14 +746,19 @@ const Admin = () => {
                         {items.map((item, index) => (
                           <tr key={item.id || index}>
                             <td>
-                              {(selectedModel?.endpoint === 'products' || selectedModel?.endpoint === 'hire-items') && item.image_url ? (
-                                <img
-                                  src={item.image_url}
-                                  alt={item.name || 'Item'}
-                                  style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
-                                />
+                              {selectedModel?.hasImage && item.image_url ? (
+                                <div className="table-image">
+                                  <img
+                                    src={item.image_url}
+                                    alt={item.name || 'Item'}
+                                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px' }}
+                                  />
+                                  <small className="image-url-preview">
+                                    {item.image_url.split('/').pop()}
+                                  </small>
+                                </div>
                               ) : (
-                                item.id || 'N/A'
+                                <span className="no-image">No Image</span>
                               )}
                             </td>
                             <td>{item.name || item.title || item.email || `Item ${index + 1}`}</td>

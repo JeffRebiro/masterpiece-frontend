@@ -410,3 +410,81 @@
         flex-direction: column;
     }
 }
+
+/* Image upload styles */
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f9f9f9;
+}
+
+.current-image, .image-preview {
+  text-align: center;
+}
+
+.current-image img, .image-preview img {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #417690;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.upload-label:hover {
+  background: #366477;
+}
+
+.uploading-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #666;
+  font-style: italic;
+}
+
+.upload-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #417690;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.format-info {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.table-image {
+  text-align: center;
+}
+
+.image-url-preview {
+  display: block;
+  font-size: 0.8em;
+  color: #666;
+  word-break: break-all;
+  max-width: 100px;
+}
+
+.no-image {
+  color: #999;
+  font-style: italic;
+}
