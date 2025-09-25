@@ -1,6 +1,6 @@
-import React, { useState, useContext } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../components/AuthContext'; // Assuming this provides the 'login' function
+import { useAuth } from '../components/AuthContext'; // your AuthContext
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,39 +19,38 @@ const Login = () => {
   const [newCustomerError, setNewCustomerError] = useState(null);
   const [newCustomerLoading, setNewCustomerLoading] = useState(false);
 
+  // create new guest user
   const handleNewCustomerSubmit = async (e) => {
     e.preventDefault();
     setNewCustomerError(null);
     setNewCustomerLoading(true);
 
     try {
-      const response = await fetch('https://e-commerce-backend-7yft.onrender.com/api/guest-users/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: newEmail,
-          password: newPassword,
-          phone: newPhone,
-          subscribed: true,
-        }),
-      });
+      const response = await fetch(
+        'https://e-commerce-backend-7yft.onrender.com/api/guest-users/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: newEmail,
+            password: newPassword,
+            phone: newPhone,
+            subscribed: true,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.detail || errorData.email?.[0] || 'Failed to create guest user.';
+        const errorMessage =
+          errorData.detail ||
+          errorData.email?.[0] ||
+          'Failed to create guest user.';
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
-
-      if (data.token) {
-        login(data.token);
-      } else if (data.access) {
-        login(data.access, data.refresh);
-      } else {
-        alert('Guest user created successfully! You can now log in.');
-      }
-
+      // success
+      alert('Guest user created successfully! Proceed to checkout.');
       navigate('/checkout/shipping-address/');
     } catch (error) {
       console.error('Error creating guest user:', error);
@@ -61,17 +60,21 @@ const Login = () => {
     }
   };
 
+  // login existing user
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoginError(null);
     setLoginLoading(true);
 
     try {
-      const response = await fetch('https://e-commerce-backend-7yft.onrender.com/api/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        'https://e-commerce-backend-7yft.onrender.com/api/token/',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -82,6 +85,7 @@ const Login = () => {
       const data = await response.json();
 
       if (data.access) {
+        // store tokens in AuthContext
         login(data.access, data.refresh);
         navigate('/checkout/shipping-address/');
       } else {
@@ -100,8 +104,18 @@ const Login = () => {
       <main className="page-main">
         <div className="container page checkout">
           <nav className="nav checkout-nav">
-            <a className="nav-link step1 disabled" href="/checkout/shipping-address/">1. Delivery address</a>
-            <a className="nav-link step2 disabled" href="/checkout/confirmation/">2. Confirmation</a>
+            <a
+              className="nav-link step1 disabled"
+              href="/checkout/shipping-address/"
+            >
+              1. Delivery address
+            </a>
+            <a
+              className="nav-link step2 disabled"
+              href="/checkout/confirmation/"
+            >
+              2. Confirmation
+            </a>
           </nav>
 
           <div className="row mt-4">
@@ -110,12 +124,20 @@ const Login = () => {
               <div className="checkout-gateway-option">
                 <div className="customer-login">
                   <h3>New to Masterpiece Empire</h3>
-                  <p className="customer-login-help">Just enter your email, phone, and create a password to get started</p>
+                  <p className="customer-login-help">
+                    Just enter your email, phone, and create a password to get
+                    started
+                  </p>
 
                   <form className="card" onSubmit={handleNewCustomerSubmit}>
                     <div className="card-body">
                       <div className="form-group mb-3">
-                        <label htmlFor="new_email" className="col-form-label required">Email address</label>
+                        <label
+                          htmlFor="new_email"
+                          className="col-form-label required"
+                        >
+                          Email address
+                        </label>
                         <input
                           type="email"
                           id="new_email"
@@ -127,7 +149,12 @@ const Login = () => {
                       </div>
 
                       <div className="form-group mb-3">
-                        <label htmlFor="new_phone" className="col-form-label required">Phone Number</label>
+                        <label
+                          htmlFor="new_phone"
+                          className="col-form-label required"
+                        >
+                          Phone Number
+                        </label>
                         <input
                           type="tel"
                           id="new_phone"
@@ -139,7 +166,12 @@ const Login = () => {
                       </div>
 
                       <div className="form-group mb-3">
-                        <label htmlFor="new_password" className="col-form-label required">Password</label>
+                        <label
+                          htmlFor="new_password"
+                          className="col-form-label required"
+                        >
+                          Password
+                        </label>
                         <input
                           type="password"
                           id="new_password"
@@ -152,7 +184,12 @@ const Login = () => {
 
                       <div className="form-group">
                         <div className="form-check">
-                          <input type="checkbox" className="form-check-input" id="consent" defaultChecked />
+                          <input
+                            type="checkbox"
+                            className="form-check-input"
+                            id="consent"
+                            defaultChecked
+                          />
                           <label className="form-check-label" htmlFor="consent">
                             We value your privacy...
                           </label>
@@ -160,8 +197,14 @@ const Login = () => {
                       </div>
                     </div>
                     <div className="card-footer">
-                      {newCustomerError && <div className="text-danger mb-2">{newCustomerError}</div>}
-                      <button type="submit" className="btn btn-primary" disabled={newCustomerLoading}>
+                      {newCustomerError && (
+                        <div className="text-danger mb-2">{newCustomerError}</div>
+                      )}
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={newCustomerLoading}
+                      >
                         {newCustomerLoading ? 'Creating...' : 'Continue'}
                       </button>
                     </div>
@@ -175,12 +218,19 @@ const Login = () => {
               <div className="checkout-gateway-option">
                 <div className="customer-login">
                   <h3>Existing customers</h3>
-                  <p className="customer-login-help">Login if you have an account with us</p>
+                  <p className="customer-login-help">
+                    Login if you have an account with us
+                  </p>
 
                   <form className="card" onSubmit={handleLoginSubmit}>
                     <div className="card-body">
                       <div className="form-group mb-3">
-                        <label htmlFor="email" className="col-form-label required">Email address</label>
+                        <label
+                          htmlFor="email"
+                          className="col-form-label required"
+                        >
+                          Email address
+                        </label>
                         <input
                           type="email"
                           id="email"
@@ -192,7 +242,12 @@ const Login = () => {
                       </div>
 
                       <div className="form-group mb-3">
-                        <label htmlFor="password" className="col-form-label required">Password</label>
+                        <label
+                          htmlFor="password"
+                          className="col-form-label required"
+                        >
+                          Password
+                        </label>
                         <input
                           type="password"
                           id="password"
@@ -204,11 +259,22 @@ const Login = () => {
                         />
                       </div>
 
-                      {loginError && <div className="text-danger mb-2">{loginError}</div>}
+                      {loginError && (
+                        <div className="text-danger mb-2">{loginError}</div>
+                      )}
                     </div>
                     <div className="card-footer d-flex justify-content-between align-items-center">
-                      <a href="/password-reset/" className="customer-login-forgotten-password">Forgotten your password?</a>
-                      <button type="submit" className="btn btn-primary" disabled={loginLoading}>
+                      <a
+                        href="/password-reset/"
+                        className="customer-login-forgotten-password"
+                      >
+                        Forgotten your password?
+                      </a>
+                      <button
+                        type="submit"
+                        className="btn btn-primary"
+                        disabled={loginLoading}
+                      >
                         {loginLoading ? 'Logging in...' : 'Login'}
                       </button>
                     </div>
