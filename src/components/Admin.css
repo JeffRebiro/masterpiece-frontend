@@ -4,6 +4,64 @@
     min-height: 100vh;
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .admin-container {
+    flex-direction: column; /* stack sidebar on top */
+  }
+
+  .admin-sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+
+  .admin-content {
+    width: 100%;
+    overflow-x: auto; /* allow horizontal scroll for tables */
+  }
+
+  .model-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .model-table thead {
+    display: none; /* optional: hide header on very small screens */
+  }
+
+  .model-table tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .model-table tbody tr td {
+    display: block;
+    text-align: left;
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .form-modal .form-container {
+    width: 95%;
+    max-width: none;
+  }
+
+  .form-row label {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .form-row input,
+  .form-row select {
+    width: 100%;
+  }
+}
+
+
 /* Header */
 .admin-header {
     background: #417690;
