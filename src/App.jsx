@@ -22,11 +22,8 @@ import ItemsForHireDetails from "./components/ItemsForHireDetails";
 import './App.css';
 
 // ✅ Admin imports
-import Admin from './admin/Admin';
-import Dashboard from './admin/Dashboard';
-import CRUDTable from './admin/CRUDTable';
-import AdminLogin from './admin/AdminLogin';
-import AdminRegister from './admin/Register';
+import Admin from './Admin';
+import './components/Admin.css';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -97,14 +94,7 @@ function AppContent() {
 
           {/* ✅ Admin routes */}
           <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/dashboard" element={<Dashboard />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/register" element={<AdminRegister />} />
-          <Route path="/admin/products" element={<CRUDTable endpoint="products" />} />
-          <Route path="/admin/categories" element={<CRUDTable endpoint="categories" />} />
-          <Route path="/admin/hire-items" element={<CRUDTable endpoint="hire-items" />} />
-          <Route path="/admin/guest-users" element={<CRUDTable endpoint="guest-users" />} />
-          <Route path="/admin/shipping-addresses" element={<CRUDTable endpoint="shipping-addresses" />} />
+
         </Routes>
       </main>
       <Socials />
