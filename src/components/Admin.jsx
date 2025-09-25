@@ -10,44 +10,48 @@ const Admin = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [isLoggedIn, setIsLoggedIn] = useState(true); // Start as logged in since no auth required
-    const [apiRoot, setApiRoot] = useState(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
+    const [creatingItem, setCreatingItem] = useState(false);
+    const [viewingItem, setViewingItem] = useState(null);
 
-    // Login form state (for future auth if needed)
-    const [loginForm, setLoginForm] = useState({
-        username: '',
-        password: ''
-    });
+    // Form states
+    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const [itemForm, setItemForm] = useState({});
 
-    // Fetch API root on component mount
-    useEffect(() => {
-        fetchApiRoot();
-    }, []);
-
-    const fetchApiRoot = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch(`${API_BASE_URL}/`);
-            if (response.ok) {
-                const data = await response.json();
-                setApiRoot(data);
-                
-                // Create models from API root
-                const modelList = Object.keys(data).map(key => ({
-                    name: key.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                    endpoint: key + '/',
-                    url: data[key],
-                    key: key
-                }));
-                
-                setModels(modelList);
-            }
-        } catch (err) {
-            setError('Failed to connect to API: ' + err.message);
-        } finally {
-            setLoading(false);
+    // Define your models with their endpoints
+    const availableModels = [
+        {
+            name: 'Products',
+            endpoint: 'products',
+            url: 'https://e-commerce-backend-7yft.onrender.com/api/products/',
+            fields: ['id', 'name', 'description', 'price', 'category', 'image', 'stock', 'created_at'] // Add actual field names
+        },
+        {
+            name: 'Categories',
+            endpoint: 'categories',
+            url: 'https://e-commerce-backend-7yft.onrender.com/api/categories/',
+            fields: ['id', 'name', 'description', 'created_at']
+        },
+        {
+            name: 'Guest Users',
+            endpoint: 'guest-users',
+            url: 'https://e-commerce-backend-7yft.onrender.com/api/guest-users/',
+            fields: ['id', 'email', 'name', 'created_at']
+        },
+        {
+            name: 'Hire Items',
+            endpoint: 'hire-items',
+            url: 'https://e-commerce-backend-7yft.onrender.com/api/hire-items/',
+            fields: ['id', 'name', 'description', 'price', 'available', 'created_at']
         }
-    };
+    ];
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            setModels(availableModels);
+        }
+    }, [isLoggedIn]);
 
     const fetchModelData = async (model) => {
         try {
@@ -55,9 +59,9 @@ const Admin = () => {
             setSelectedModel(model);
             setError('');
 
-            console.log('Fetching from:', `${API_BASE_URL}/${model.endpoint}`);
+            console.log('Fetching from:', model.url);
 
-            const response = await fetch(`${API_BASE_URL}/${model.endpoint}`);
+            const response = await fetch(model.url);
             
             if (response.ok) {
                 const data = await response.json();
@@ -67,71 +71,176 @@ const Admin = () => {
                 if (Array.isArray(data)) {
                     setItems(data);
                 } else if (data.results) {
-                    setItems(data.results); // Paginated response
-                } else {
-                    // If it's an object but not an array, try to see if it has items
+                    setItems(data.results);
+                } else if (typeof data === 'object') {
                     const values = Object.values(data);
-                    if (values.length > 0 && Array.isArray(values[0])) {
-                        setItems(values[0]);
-                    } else {
-                        setItems([data]); // Single object
-                    }
+                    const arrayValue = values.find(val => Array.isArray(val));
+                    setItems(arrayValue || [data]);
+                } else {
+                    setItems([]);
                 }
             } else {
                 setError(`Failed to load ${model.name}: ${response.status} ${response.statusText}`);
             }
         } catch (err) {
-            setError('Network error: Failed to fetch data - ' + err.message);
-            console.error('Fetch error:', err);
+            setError('Network error: ' + err.message);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        // Since no auth endpoint, we'll simulate login
+        setIsLoggedIn(true);
+        setUser({ username: loginForm.username || 'admin' });
+        setError('');
+    };
+
     const handleLogout = () => {
         setIsLoggedIn(false);
         setUser(null);
-        setModels([]);
+        setSelectedModel(null);
         setItems([]);
         setError('');
     };
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        // Since there's no auth endpoint, we'll just set as logged in
-        setIsLoggedIn(true);
-        setUser({ username: loginForm.username || 'admin' });
-        fetchApiRoot();
+    // CREATE operation
+    const createItem = async (formData) => {
+        try {
+            setLoading(true);
+            const response = await fetch(selectedModel.url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                const newItem = await response.json();
+                setItems([...items, newItem]);
+                setCreatingItem(false);
+                setItemForm({});
+                setError('Item created successfully!');
+                setTimeout(() => setError(''), 3000);
+            } else {
+                const errorData = await response.json();
+                setError('Failed to create item: ' + JSON.stringify(errorData));
+            }
+        } catch (err) {
+            setError('Network error: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
+    // UPDATE operation
+    const updateItem = async (formData) => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${selectedModel.url}${editingItem.id}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                const updatedItem = await response.json();
+                setItems(items.map(item => item.id === editingItem.id ? updatedItem : item));
+                setEditingItem(null);
+                setItemForm({});
+                setError('Item updated successfully!');
+                setTimeout(() => setError(''), 3000);
+            } else {
+                const errorData = await response.json();
+                setError('Failed to update item: ' + JSON.stringify(errorData));
+            }
+        } catch (err) {
+            setError('Network error: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // DELETE operation
     const deleteItem = async (itemId) => {
         if (!window.confirm('Are you sure you want to delete this item?')) {
             return;
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/${selectedModel.endpoint}${itemId}/`, {
+            const response = await fetch(`${selectedModel.url}${itemId}/`, {
                 method: 'DELETE'
             });
 
-            if (response.ok) {
+            if (response.ok || response.status === 204) {
                 setItems(items.filter(item => item.id !== itemId));
-                setError('Item deleted successfully');
+                setError('Item deleted successfully!');
                 setTimeout(() => setError(''), 3000);
             } else {
-                setError('Failed to delete item');
+                setError('Failed to delete item: ' + response.status);
             }
         } catch (err) {
-            setError('Network error: Failed to delete item');
+            setError('Network error: ' + err.message);
         }
+    };
+
+    const handleEdit = (item) => {
+        setEditingItem(item);
+        setItemForm({ ...item });
+    };
+
+    const handleCreate = () => {
+        setCreatingItem(true);
+        setItemForm({});
+    };
+
+    const handleFormSubmit = (e) => {
+        e.preventDefault();
+        if (editingItem) {
+            updateItem(itemForm);
+        } else {
+            createItem(itemForm);
+        }
+    };
+
+    const handleFormChange = (field, value) => {
+        setItemForm(prev => ({
+            ...prev,
+            [field]: value
+        }));
     };
 
     const renderValue = (value) => {
         if (value === null || value === undefined) return 'null';
         if (typeof value === 'object') {
-            return JSON.stringify(value).substring(0, 100) + (JSON.stringify(value).length > 100 ? '...' : '');
+            return JSON.stringify(value).substring(0, 50) + '...';
         }
-        return String(value);
+        return String(value).substring(0, 100);
+    };
+
+    const renderFormField = (field) => {
+        if (field === 'id' || field === 'created_at' || field === 'updated_at') {
+            return null; // Skip auto-generated fields
+        }
+
+        const value = itemForm[field] || '';
+        
+        return (
+            <div key={field} className="form-row">
+                <label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}:</label>
+                <input
+                    type="text"
+                    id={field}
+                    value={value}
+                    onChange={(e) => handleFormChange(field, e.target.value)}
+                    placeholder={`Enter ${field}`}
+                />
+            </div>
+        );
     };
 
     if (!isLoggedIn) {
@@ -145,43 +254,37 @@ const Admin = () => {
                 
                 <div className="login-container">
                     <div className="login-form">
-                        <h2>API Admin Interface</h2>
+                        <h2>Log in</h2>
                         <div className="api-info">
                             <p><strong>API Base:</strong> {API_BASE_URL}</p>
-                            <p><strong>Status:</strong> No authentication required</p>
+                            <p><em>Note: This interface bypasses Django admin authentication</em></p>
                         </div>
                         <form onSubmit={handleLogin}>
                             <div className="form-row">
-                                <label htmlFor="id_username">Username (optional):</label>
+                                <label htmlFor="id_username">Username:</label>
                                 <input
                                     type="text"
-                                    name="username"
                                     id="id_username"
                                     value={loginForm.username}
                                     onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
                                     placeholder="Enter any username"
+                                    required
                                 />
                             </div>
                             <div className="form-row">
-                                <label htmlFor="id_password">Password (optional):</label>
+                                <label htmlFor="id_password">Password:</label>
                                 <input
                                     type="password"
-                                    name="password"
                                     id="id_password"
                                     value={loginForm.password}
                                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                                     placeholder="Enter any password"
+                                    required
                                 />
                             </div>
                             
                             <div className="submit-row">
-                                <button type="submit">
-                                    Enter Admin Interface
-                                </button>
-                            </div>
-                            
-                            <div className="login-help">
-                                <p>This API doesn't require authentication. Click above to proceed.</p>
+                                <button type="submit">Log in</button>
                             </div>
                         </form>
                     </div>
@@ -208,7 +311,7 @@ const Admin = () => {
                 {/* Sidebar */}
                 <div className="admin-sidebar">
                     <div className="sidebar-section">
-                        <h3>API MODELS</h3>
+                        <h3>MODELS</h3>
                         <ul>
                             {models.map((model, index) => (
                                 <li 
@@ -220,14 +323,6 @@ const Admin = () => {
                                 </li>
                             ))}
                         </ul>
-                    </div>
-                    
-                    <div className="sidebar-section">
-                        <h3>API INFO</h3>
-                        <div className="api-stats">
-                            <p>Models: {models.length}</p>
-                            <p>Status: Connected</p>
-                        </div>
                     </div>
                 </div>
 
@@ -241,29 +336,61 @@ const Admin = () => {
                     )}
                     
                     {error && (
-                        <div className={`message ${error.includes('successfully') ? 'success-message' : 'error-message'}`}>
+                        <div className={`message ${error.includes('successfully') ? 'success' : 'error'}`}>
                             {error}
+                        </div>
+                    )}
+
+                    {/* Create/Edit Form */}
+                    {(creatingItem || editingItem) && selectedModel && (
+                        <div className="form-modal">
+                            <div className="form-container">
+                                <h3>{editingItem ? 'Edit' : 'Add'} {selectedModel.name}</h3>
+                                <form onSubmit={handleFormSubmit}>
+                                    {selectedModel.fields.map(renderFormField)}
+                                    <div className="form-actions">
+                                        <button type="submit" className="save-btn">
+                                            {editingItem ? 'Update' : 'Create'}
+                                        </button>
+                                        <button 
+                                            type="button" 
+                                            className="cancel-btn"
+                                            onClick={() => {
+                                                setEditingItem(null);
+                                                setCreatingItem(false);
+                                                setItemForm({});
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* View Modal */}
+                    {viewingItem && (
+                        <div className="view-modal">
+                            <div className="view-container">
+                                <h3>View {selectedModel?.name}</h3>
+                                <pre>{JSON.stringify(viewingItem, null, 2)}</pre>
+                                <button 
+                                    className="close-btn"
+                                    onClick={() => setViewingItem(null)}
+                                >
+                                    Close
+                                </button>
+                            </div>
                         </div>
                     )}
 
                     {!selectedModel ? (
                         <div className="dashboard">
-                            <h2>API Administration</h2>
+                            <h2>Site Administration</h2>
                             <div className="welcome">
-                                <p>Welcome to the Django REST Framework Admin Interface.</p>
-                                <p>Select a model from the sidebar to view and manage data.</p>
-                                
-                                <div className="api-details">
-                                    <h3>Available Endpoints:</h3>
-                                    <div className="endpoint-list">
-                                        {models.map((model, index) => (
-                                            <div key={index} className="endpoint-item">
-                                                <strong>{model.name}:</strong> 
-                                                <code>/{model.endpoint}</code>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                <p>Welcome to the Admin Interface.</p>
+                                <p>Select a model from the sidebar to manage data.</p>
                             </div>
                         </div>
                     ) : (
@@ -274,6 +401,13 @@ const Admin = () => {
                                     <span className="item-count"> ({items.length} items)</span>
                                 </h2>
                                 <div className="model-actions">
+                                    <button 
+                                        className="add-btn"
+                                        onClick={handleCreate}
+                                        disabled={loading}
+                                    >
+                                        Add {selectedModel.name.slice(0, -1)}
+                                    </button>
                                     <button 
                                         className="refresh-btn"
                                         onClick={() => fetchModelData(selectedModel)}
@@ -290,26 +424,30 @@ const Admin = () => {
                                         <table className="model-table">
                                             <thead>
                                                 <tr>
-                                                    {Object.keys(items[0]).map(key => (
-                                                        <th key={key}>{key}</th>
-                                                    ))}
+                                                    <th>ID</th>
+                                                    <th>Name/Title</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {items.map((item, index) => (
                                                     <tr key={item.id || index}>
-                                                        {Object.keys(items[0]).map(key => (
-                                                            <td key={key} title={renderValue(item[key])}>
-                                                                {renderValue(item[key])}
-                                                            </td>
-                                                        ))}
+                                                        <td>{item.id || 'N/A'}</td>
+                                                        <td>
+                                                            {item.name || item.title || item.email || `Item ${index + 1}`}
+                                                        </td>
                                                         <td className="actions">
                                                             <button 
                                                                 className="view-btn"
-                                                                onClick={() => alert(JSON.stringify(item, null, 2))}
+                                                                onClick={() => setViewingItem(item)}
                                                             >
                                                                 View
+                                                            </button>
+                                                            <button 
+                                                                className="edit-btn"
+                                                                onClick={() => handleEdit(item)}
+                                                            >
+                                                                Edit
                                                             </button>
                                                             <button 
                                                                 className="delete-btn"
@@ -325,14 +463,13 @@ const Admin = () => {
                                     </div>
                                 ) : (
                                     <div className="no-data">
-                                        <p>No data available for {selectedModel.name}.</p>
-                                        <p>This endpoint might be empty or require different permissions.</p>
-                                    </div>
-                                )}
-                                
-                                {items.length > 0 && (
-                                    <div className="data-info">
-                                        <p>Showing {items.length} items from {selectedModel.endpoint}</p>
+                                        <p>No {selectedModel.name.toLowerCase()} found.</p>
+                                        <button 
+                                            className="add-btn"
+                                            onClick={handleCreate}
+                                        >
+                                            Add the first one
+                                        </button>
                                     </div>
                                 )}
                             </div>
