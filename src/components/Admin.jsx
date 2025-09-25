@@ -21,30 +21,83 @@ const Admin = () => {
     const [itemForm, setItemForm] = useState({});
 
     // Define your models with their endpoints
+    // inside Admin.jsx
+
+    // Define your models with their endpoints and fields matching your Django models
     const availableModels = [
         {
             name: 'Products',
             endpoint: 'products',
             url: 'https://e-commerce-backend-7yft.onrender.com/api/products/',
-            fields: ['id', 'name', 'description', 'price', 'category', 'image', 'stock', 'created_at']
+            fields: [
+                'id',
+                'name',
+                'price',
+                'description',
+                'category',   // FK id or slug depending on your API
+                'image_url'   // matches models.Product.image_url
+            ]
         },
         {
             name: 'Categories',
             endpoint: 'categories',
             url: 'https://e-commerce-backend-7yft.onrender.com/api/categories/',
-            fields: ['id', 'name', 'description', 'created_at']
+            fields: [
+                'id',
+                'name',
+                'slug'
+            ]
         },
         {
             name: 'Guest Users',
             endpoint: 'guest-users',
             url: 'https://e-commerce-backend-7yft.onrender.com/api/guest-users/',
-            fields: ['id', 'email', 'name', 'created_at']
+            fields: [
+                'id',
+                'email',
+                'first_name',
+                'last_name',
+                'phone',
+                'subscribed',
+                'is_active'
+            ]
         },
         {
             name: 'Hire Items',
             endpoint: 'hire-items',
             url: 'https://e-commerce-backend-7yft.onrender.com/api/hire-items/',
-            fields: ['id', 'name', 'description', 'price', 'available', 'created_at']
+            fields: [
+                'id',
+                'name',
+                'hire_price_per_day',
+                'hire_price_per_hour',
+                'image_url',
+                'details'
+            ]
+        },
+        {
+            name: 'Courier Orders',
+            endpoint: 'courier-orders',
+            url: 'https://e-commerce-backend-7yft.onrender.com/api/courier-orders/',
+            fields: [
+                'id',
+                'parcel_action',
+                'from_address',
+                'to_address',
+                'selected_item',
+                'item_price',
+                'item_type',
+                'order_type',
+                'delivery_fee',
+                'total',
+                'payment_method',
+                'contact_name',
+                'contact_phone',
+                'notes',
+                'recipient_name',
+                'recipient_phone',
+                'delivery_location'
+            ]
         }
     ];
 
@@ -70,7 +123,7 @@ const Admin = () => {
             const response = await fetch(`${API_BASE_URL}/user-profile/`, {
                 headers: getAuthHeaders()
             });
-            
+
             if (!response.ok) {
                 // Token is invalid, logout user
                 handleLogout();
@@ -101,11 +154,11 @@ const Admin = () => {
             const response = await fetch(model.url, {
                 headers: getAuthHeaders()
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('Received data:', data);
-                
+
                 // Handle different response formats
                 if (Array.isArray(data)) {
                     setItems(data);
@@ -152,7 +205,7 @@ const Admin = () => {
             if (response.ok) {
                 const data = await response.json();
                 const token = data.access; // JWT access token
-                
+
                 // Store token in localStorage and state
                 localStorage.setItem('authToken', token);
                 setAuthToken(token);
@@ -310,7 +363,7 @@ const Admin = () => {
         }
 
         const value = itemForm[field] || '';
-        
+
         return (
             <div key={field} className="form-row">
                 <label htmlFor={field}>{field.replace(/_/g, ' ').toUpperCase()}:</label>
@@ -333,7 +386,7 @@ const Admin = () => {
                         <h1>Django Administration</h1>
                     </div>
                 </div>
-                
+
                 <div className="login-container">
                     <div className="login-form">
                         <h2>Log in</h2>
@@ -349,7 +402,7 @@ const Admin = () => {
                                     type="email"
                                     id="id_email"
                                     value={loginForm.email}
-                                    onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                                     placeholder="Enter your email"
                                     required
                                     disabled={loading}
@@ -361,13 +414,13 @@ const Admin = () => {
                                     type="password"
                                     id="id_password"
                                     value={loginForm.password}
-                                    onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
+                                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                                     placeholder="Enter your password"
                                     required
                                     disabled={loading}
                                 />
                             </div>
-                            
+
                             <div className="submit-row">
                                 <button type="submit" disabled={loading}>
                                     {loading ? 'Logging in...' : 'Log in'}
@@ -388,7 +441,7 @@ const Admin = () => {
                     <h1>Django Administration</h1>
                 </div>
                 <div className="admin-user">
-                    Welcome, <strong>{user?.username || 'Admin'}</strong> | 
+                    Welcome, <strong>{user?.username || 'Admin'}</strong> |
                     <span className="logout-link" onClick={handleLogout}>Log out</span>
                 </div>
             </div>
@@ -401,7 +454,7 @@ const Admin = () => {
                         <h3>MODELS</h3>
                         <ul>
                             {models.map((model, index) => (
-                                <li 
+                                <li
                                     key={index}
                                     className={selectedModel?.endpoint === model.endpoint ? 'active' : ''}
                                     onClick={() => fetchModelData(model)}
@@ -421,7 +474,7 @@ const Admin = () => {
                             Loading...
                         </div>
                     )}
-                    
+
                     {error && (
                         <div className={`message ${error.includes('successfully') ? 'success' : 'error'}`}>
                             {error}
@@ -439,8 +492,8 @@ const Admin = () => {
                                         <button type="submit" className="save-btn" disabled={loading}>
                                             {loading ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
                                         </button>
-                                        <button 
-                                            type="button" 
+                                        <button
+                                            type="button"
                                             className="cancel-btn"
                                             onClick={() => {
                                                 setEditingItem(null);
@@ -463,7 +516,7 @@ const Admin = () => {
                             <div className="view-container">
                                 <h3>View {selectedModel?.name}</h3>
                                 <pre>{JSON.stringify(viewingItem, null, 2)}</pre>
-                                <button 
+                                <button
                                     className="close-btn"
                                     onClick={() => setViewingItem(null)}
                                 >
@@ -485,18 +538,18 @@ const Admin = () => {
                         <div className="model-view">
                             <div className="model-header">
                                 <h2>
-                                    {selectedModel.name} 
+                                    {selectedModel.name}
                                     <span className="item-count"> ({items.length} items)</span>
                                 </h2>
                                 <div className="model-actions">
-                                    <button 
+                                    <button
                                         className="add-btn"
                                         onClick={handleCreate}
                                         disabled={loading}
                                     >
                                         Add {selectedModel.name.slice(0, -1)}
                                     </button>
-                                    <button 
+                                    <button
                                         className="refresh-btn"
                                         onClick={() => fetchModelData(selectedModel)}
                                         disabled={loading}
@@ -505,7 +558,7 @@ const Admin = () => {
                                     </button>
                                 </div>
                             </div>
-                            
+
                             <div className="model-content">
                                 {items.length > 0 ? (
                                     <div className="table-container">
@@ -525,21 +578,21 @@ const Admin = () => {
                                                             {item.name || item.title || item.email || `Item ${index + 1}`}
                                                         </td>
                                                         <td className="actions">
-                                                            <button 
+                                                            <button
                                                                 className="view-btn"
                                                                 onClick={() => setViewingItem(item)}
                                                                 disabled={loading}
                                                             >
                                                                 View
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 className="edit-btn"
                                                                 onClick={() => handleEdit(item)}
                                                                 disabled={loading}
                                                             >
                                                                 Edit
                                                             </button>
-                                                            <button 
+                                                            <button
                                                                 className="delete-btn"
                                                                 onClick={() => deleteItem(item.id)}
                                                                 disabled={loading}
@@ -555,7 +608,7 @@ const Admin = () => {
                                 ) : (
                                     <div className="no-data">
                                         <p>No {selectedModel.name.toLowerCase()} found.</p>
-                                        <button 
+                                        <button
                                             className="add-btn"
                                             onClick={handleCreate}
                                             disabled={loading}
