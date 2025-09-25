@@ -11,6 +11,7 @@ const Admin = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [availableEndpoints, setAvailableEndpoints] = useState([]);
 
     // Login form state
     const [loginForm, setLoginForm] = useState({
@@ -18,8 +19,48 @@ const Admin = () => {
         password: ''
     });
 
-    // Check for existing token on component mount
+    // Discover available endpoints
+    const discoverEndpoints = async () => {
+        const endpointsToTest = [
+            '/auth/login/',
+            '/auth/token/login/',
+            '/login/',
+            '/token-auth/',
+            '/api-token-auth/',
+            '/guest-users/',
+            '/products/',
+            '/categories/',
+            '/orders/',
+            '/hire-items/'
+        ];
+
+        const available = [];
+
+        for (const endpoint of endpointsToTest) {
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.status !== 404) {
+                    available.push(endpoint);
+                }
+            } catch (err) {
+                // Endpoint not available
+            }
+        }
+
+        setAvailableEndpoints(available);
+        return available;
+    };
+
+    // Check for existing authentication on component mount
     useEffect(() => {
+        discoverEndpoints();
+        
         const token = localStorage.getItem('authToken');
         const userData = localStorage.getItem('userData');
         
@@ -30,11 +71,109 @@ const Admin = () => {
         }
     }, []);
 
-    // Test API connection and get available endpoints
+    // Test different authentication methods
+    const tryAuthentication = async (username, password) => {
+        const authMethods = [
+            {
+                name: 'Token Auth',
+                endpoint: '/auth/token/login/',
+                method: 'POST',
+                body: { username, password },
+                getToken: (data) => data.token || data.auth_token
+            },
+            {
+                name: 'Session Auth',
+                endpoint: '/auth/login/',
+                method: 'POST', 
+                body: { username, password },
+                getToken: (data) => data.key || data.token
+            },
+            {
+                name: 'DRF Token Auth',
+                endpoint: '/api-token-auth/',
+                method: 'POST',
+                body: { username, password },
+                getToken: (data) => data.token
+            },
+            {
+                name: 'Simple JWT',
+                endpoint: '/token/',
+                method: 'POST',
+                body: { username, password },
+                getToken: (data) => data.access
+            }
+        ];
+
+        for (const authMethod of authMethods) {
+            try {
+                console.log(`Trying ${authMethod.name} at ${authMethod.endpoint}`);
+                
+                const response = await fetch(`${API_BASE_URL}${authMethod.endpoint}`, {
+                    method: authMethod.method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(authMethod.body)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const token = authMethod.getToken(data);
+                    
+                    if (token) {
+                        return {
+                            success: true,
+                            token: token,
+                            method: authMethod.name,
+                            data: data
+                        };
+                    }
+                }
+            } catch (err) {
+                console.log(`${authMethod.name} failed:`, err);
+                continue;
+            }
+        }
+
+        return { success: false, error: 'All authentication methods failed' };
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const result = await tryAuthentication(loginForm.username, loginForm.password);
+
+            if (result.success) {
+                localStorage.setItem('authToken', result.token);
+                localStorage.setItem('userData', JSON.stringify({
+                    username: loginForm.username,
+                    authMethod: result.method
+                }));
+                
+                setUser({ username: loginForm.username });
+                setIsLoggedIn(true);
+                setLoginForm({ username: '', password: '' });
+                fetchAvailableModels();
+                
+                setError(`Success! Using ${result.method}`);
+                setTimeout(() => setError(''), 2000);
+            } else {
+                setError('Authentication failed. Please check your credentials.');
+            }
+        } catch (err) {
+            setError('Network error: Please check your connection');
+            console.error('Login error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const fetchAvailableModels = async () => {
         setLoading(true);
         try {
-            // Test common DRF endpoints
             const endpoints = [
                 { name: 'Products', endpoint: 'products/', key: 'products' },
                 { name: 'Categories', endpoint: 'categories/', key: 'categories' },
@@ -43,14 +182,20 @@ const Admin = () => {
             ];
 
             const availableModels = [];
+            const token = localStorage.getItem('authToken');
 
             for (const ep of endpoints) {
                 try {
+                    const headers = {
+                        'Content-Type': 'application/json',
+                    };
+
+                    if (token) {
+                        headers['Authorization'] = `Token ${token}`;
+                    }
+
                     const response = await fetch(`${API_BASE_URL}/${ep.endpoint}`, {
-                        headers: {
-                            'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                            'Content-Type': 'application/json',
-                        }
+                        headers: headers
                     });
 
                     if (response.ok) {
@@ -73,96 +218,14 @@ const Admin = () => {
         }
     };
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        setIsLoggedIn(false);
+        setUser(null);
+        setModels([]);
+        setItems([]);
         setError('');
-
-        try {
-            // Try DRF token authentication first
-            const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: loginForm.username,
-                    password: loginForm.password
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.token) {
-                // Token-based auth successful
-                localStorage.setItem('authToken', data.token);
-                localStorage.setItem('userData', JSON.stringify({
-                    username: loginForm.username,
-                    email: data.user?.email || ''
-                }));
-                
-                setUser({ username: loginForm.username });
-                setIsLoggedIn(true);
-                setLoginForm({ username: '', password: '' });
-                fetchAvailableModels();
-            } else {
-                // If token auth fails, try session-based auth
-                await handleSessionLogin();
-            }
-        } catch (err) {
-            setError('Network error: Please check your connection and try again.');
-            console.error('Login error:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSessionLogin = async () => {
-        try {
-            const formData = new FormData();
-            formData.append('username', loginForm.username);
-            formData.append('password', loginForm.password);
-
-            const response = await fetch(`${API_BASE_URL}/auth/session-login/`, {
-                method: 'POST',
-                credentials: 'include',
-                body: formData
-            });
-
-            if (response.ok) {
-                const userData = await response.json();
-                setUser(userData);
-                setIsLoggedIn(true);
-                setLoginForm({ username: '', password: '' });
-                fetchAvailableModels();
-            } else {
-                setError('Invalid username or password');
-            }
-        } catch (err) {
-            setError('Authentication failed. Please try again.');
-        }
-    };
-
-    const handleLogout = async () => {
-        try {
-            // Try token logout
-            await fetch(`${API_BASE_URL}/auth/logout/`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Token ${localStorage.getItem('authToken')}`,
-                    'Content-Type': 'application/json',
-                }
-            });
-        } catch (err) {
-            console.error('Logout error:', err);
-        } finally {
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('userData');
-            setIsLoggedIn(false);
-            setUser(null);
-            setModels([]);
-            setItems([]);
-        }
     };
 
     const fetchModelData = async (model) => {
@@ -177,24 +240,44 @@ const Admin = () => {
             };
 
             if (token) {
-                headers['Authorization'] = `Token ${token}`;
+                headers['Authorization'] = `Bearer ${token}`;
+                // Also try other common token formats
+                const altHeaders = [
+                    `Token ${token}`,
+                    `Bearer ${token}`,
+                    `JWT ${token}`
+                ];
+
+                // Try each authorization format
+                for (const authHeader of altHeaders) {
+                    try {
+                        const testResponse = await fetch(`${API_BASE_URL}/${model.endpoint}`, {
+                            headers: { ...headers, 'Authorization': authHeader }
+                        });
+
+                        if (testResponse.ok) {
+                            headers['Authorization'] = authHeader;
+                            break;
+                        }
+                    } catch (err) {
+                        continue;
+                    }
+                }
             }
 
             const response = await fetch(`${API_BASE_URL}/${model.endpoint}`, {
-                headers: headers,
-                credentials: token ? 'omit' : 'include'
+                headers: headers
             });
 
             if (response.ok) {
                 const data = await response.json();
                 
-                // Handle different response formats
                 if (Array.isArray(data)) {
                     setItems(data);
                 } else if (data.results) {
-                    setItems(data.results); // Paginated response
+                    setItems(data.results);
                 } else if (typeof data === 'object') {
-                    setItems([data]); // Single object
+                    setItems([data]);
                 } else {
                     setItems([]);
                 }
@@ -202,44 +285,13 @@ const Admin = () => {
                 setError('Authentication required. Please log in again.');
                 handleLogout();
             } else {
-                setError(`Failed to load ${model.name}: ${response.statusText}`);
+                setError(`Failed to load data: ${response.status} ${response.statusText}`);
             }
         } catch (err) {
             setError('Network error: Failed to fetch data');
             console.error('Fetch error:', err);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const deleteItem = async (itemId) => {
-        if (!window.confirm('Are you sure you want to delete this item?')) {
-            return;
-        }
-
-        try {
-            const token = localStorage.getItem('authToken');
-            const headers = {
-                'Content-Type': 'application/json',
-            };
-
-            if (token) {
-                headers['Authorization'] = `Token ${token}`;
-            }
-
-            const response = await fetch(`${API_BASE_URL}/${selectedModel.endpoint}${itemId}/`, {
-                method: 'DELETE',
-                headers: headers,
-                credentials: token ? 'omit' : 'include'
-            });
-
-            if (response.ok) {
-                setItems(items.filter(item => item.id !== itemId));
-            } else {
-                setError('Failed to delete item');
-            }
-        } catch (err) {
-            setError('Network error: Failed to delete item');
         }
     };
 
@@ -250,11 +302,14 @@ const Admin = () => {
                     <div className="admin-brand">
                         <h1>Django Administration</h1>
                     </div>
+                    <div className="admin-info">
+                        API: {API_BASE_URL}
+                    </div>
                 </div>
                 
                 <div className="login-container">
                     <div className="login-form">
-                        <h2>Log in</h2>
+                        <h2>Log in to Django Admin</h2>
                         <form onSubmit={handleLogin}>
                             <div className="form-row">
                                 <label htmlFor="id_username">Username:</label>
@@ -267,6 +322,7 @@ const Admin = () => {
                                     required
                                     autoFocus
                                     disabled={loading}
+                                    placeholder="Superuser username"
                                 />
                             </div>
                             <div className="form-row">
@@ -279,15 +335,26 @@ const Admin = () => {
                                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
                                     required
                                     disabled={loading}
+                                    placeholder="Superuser password"
                                 />
                             </div>
-                            {error && <div className="errornote">{error}</div>}
+                            
+                            {error && (
+                                <div className={error.includes('Success') ? 'successnote' : 'errornote'}>
+                                    {error}
+                                </div>
+                            )}
+                            
                             <div className="submit-row">
                                 <button type="submit" disabled={loading}>
                                     {loading ? 'Logging in...' : 'Log in'}
                                 </button>
                             </div>
+                            
                             <div className="login-help">
+                                <h4>Debug Information:</h4>
+                                <p>API Base: {API_BASE_URL}</p>
+                                <p>Available endpoints: {availableEndpoints.join(', ') || 'Discovering...'}</p>
                                 <p>Use your Django superuser credentials</p>
                             </div>
                         </form>
@@ -299,7 +366,6 @@ const Admin = () => {
 
     return (
         <div className="django-admin">
-            {/* Header */}
             <div className="admin-header">
                 <div className="admin-brand">
                     <h1>Django Administration</h1>
@@ -310,9 +376,7 @@ const Admin = () => {
                 </div>
             </div>
 
-            {/* Main Content */}
             <div className="admin-container">
-                {/* Sidebar */}
                 <div className="admin-sidebar">
                     <div className="sidebar-section">
                         <h3>MODELS</h3>
@@ -330,7 +394,6 @@ const Admin = () => {
                     </div>
                 </div>
 
-                {/* Content Area */}
                 <div className="admin-content">
                     {loading && <div className="loading">Loading...</div>}
                     {error && <div className="errornote">{error}</div>}
@@ -339,25 +402,19 @@ const Admin = () => {
                         <div className="dashboard">
                             <h2>Site administration</h2>
                             <div className="welcome">
-                                <p>Welcome to Django administration, {user?.username}.</p>
-                                <p>Please choose a model from the sidebar to view and edit records.</p>
-                                <div className="model-stats">
-                                    <h3>Available Models:</h3>
-                                    <ul>
-                                        {models.map((model, index) => (
-                                            <li key={index}>{model.name}</li>
-                                        ))}
-                                    </ul>
+                                <p>Welcome, {user?.username}.</p>
+                                <p>Available models: {models.length}</p>
+                                <div className="debug-info">
+                                    <h4>Session Info:</h4>
+                                    <p>Auth Method: {user?.authMethod || 'Unknown'}</p>
+                                    <p>Token: {localStorage.getItem('authToken') ? 'Present' : 'Missing'}</p>
                                 </div>
                             </div>
                         </div>
                     ) : (
                         <div className="model-view">
                             <div className="model-header">
-                                <h2>{selectedModel.name}</h2>
-                                <div>
-                                    <span className="model-count">{items.length} items</span>
-                                </div>
+                                <h2>{selectedModel.name} ({items.length})</h2>
                             </div>
                             
                             <div className="model-content">
@@ -365,31 +422,25 @@ const Admin = () => {
                                     <table className="model-table">
                                         <thead>
                                             <tr>
-                                                {Object.keys(items[0]).map(key => (
+                                                {Object.keys(items[0]).slice(0, 6).map(key => (
                                                     <th key={key}>{key}</th>
                                                 ))}
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {items.map((item, index) => (
+                                            {items.slice(0, 10).map((item, index) => (
                                                 <tr key={item.id || index}>
-                                                    {Object.values(item).map((value, idx) => (
-                                                        <td key={idx}>
+                                                    {Object.values(item).slice(0, 6).map((value, idx) => (
+                                                        <td key={idx} title={typeof value === 'object' ? JSON.stringify(value) : String(value)}>
                                                             {typeof value === 'object' ? 
-                                                                JSON.stringify(value).substring(0, 50) + '...' : 
-                                                                String(value)
+                                                                'Object' : 
+                                                                String(value).substring(0, 30)
                                                             }
                                                         </td>
                                                     ))}
                                                     <td className="actions">
-                                                        <button className="change-btn">Change</button>
-                                                        <button 
-                                                            className="delete-btn"
-                                                            onClick={() => deleteItem(item.id)}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        <button className="view-btn">View</button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -397,7 +448,7 @@ const Admin = () => {
                                     </table>
                                 ) : (
                                     <div className="no-data">
-                                        <p>No {selectedModel.name.toLowerCase()} found.</p>
+                                        <p>No data available for {selectedModel.name}</p>
                                     </div>
                                 )}
                             </div>
