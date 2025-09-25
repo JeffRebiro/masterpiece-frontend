@@ -22,7 +22,7 @@ import ItemsForHireDetails from "./components/ItemsForHireDetails";
 import './App.css';
 
 // ✅ Admin imports
-import Admin from './Admin';
+import Admin from './components/Admin';
 import './components/Admin.css';
 
 function App() {
