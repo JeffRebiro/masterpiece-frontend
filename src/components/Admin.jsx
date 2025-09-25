@@ -14,9 +14,10 @@ const Admin = () => {
     const [editingItem, setEditingItem] = useState(null);
     const [creatingItem, setCreatingItem] = useState(false);
     const [viewingItem, setViewingItem] = useState(null);
+    const [authToken, setAuthToken] = useState(localStorage.getItem('authToken'));
 
     // Form states
-    const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+    const [loginForm, setLoginForm] = useState({ email: '', password: '' });
     const [itemForm, setItemForm] = useState({});
 
     // Define your models with their endpoints
@@ -25,7 +26,7 @@ const Admin = () => {
             name: 'Products',
             endpoint: 'products',
             url: 'https://e-commerce-backend-7yft.onrender.com/api/products/',
-            fields: ['id', 'name', 'description', 'price', 'category', 'image', 'stock', 'created_at'] // Add actual field names
+            fields: ['id', 'name', 'description', 'price', 'category', 'image', 'stock', 'created_at']
         },
         {
             name: 'Categories',
@@ -47,11 +48,47 @@ const Admin = () => {
         }
     ];
 
+    // Check if user is already logged in on component mount
+    useEffect(() => {
+        if (authToken) {
+            setIsLoggedIn(true);
+            setUser({ username: 'Admin' });
+            // Try to fetch user profile to verify token is valid
+            verifyToken();
+        }
+    }, [authToken]);
+
     useEffect(() => {
         if (isLoggedIn) {
             setModels(availableModels);
         }
     }, [isLoggedIn]);
+
+    // Verify token validity by fetching user profile
+    const verifyToken = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/user-profile/`, {
+                headers: getAuthHeaders()
+            });
+            
+            if (!response.ok) {
+                // Token is invalid, logout user
+                handleLogout();
+            }
+        } catch (error) {
+            // Network error, keep user logged in but show warning
+            console.warn('Network error during token verification');
+        }
+    };
+
+    // Helper function to get auth headers for JWT
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem('authToken');
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': token ? `Bearer ${token}` : ''
+        };
+    };
 
     const fetchModelData = async (model) => {
         try {
@@ -61,7 +98,9 @@ const Admin = () => {
 
             console.log('Fetching from:', model.url);
 
-            const response = await fetch(model.url);
+            const response = await fetch(model.url, {
+                headers: getAuthHeaders()
+            });
             
             if (response.ok) {
                 const data = await response.json();
@@ -79,6 +118,9 @@ const Admin = () => {
                 } else {
                     setItems([]);
                 }
+            } else if (response.status === 401) {
+                setError('Authentication required. Please log in again.');
+                handleLogout();
             } else {
                 setError(`Failed to load ${model.name}: ${response.status} ${response.statusText}`);
             }
@@ -91,13 +133,47 @@ const Admin = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        // Since no auth endpoint, we'll simulate login
-        setIsLoggedIn(true);
-        setUser({ username: loginForm.username || 'admin' });
+        setLoading(true);
         setError('');
+
+        try {
+            // Using JWT token endpoint from your urls.py
+            const response = await fetch(`${API_BASE_URL}/token/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: loginForm.email, // Using email as per your CustomTokenObtainPairView
+                    password: loginForm.password
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const token = data.access; // JWT access token
+                
+                // Store token in localStorage and state
+                localStorage.setItem('authToken', token);
+                setAuthToken(token);
+                setIsLoggedIn(true);
+                setUser({ username: loginForm.email });
+                setError('');
+                setLoginForm({ email: '', password: '' }); // Clear login form
+            } else {
+                const errorData = await response.json();
+                setError('Login failed: ' + (errorData.detail || 'Invalid credentials'));
+            }
+        } catch (err) {
+            setError('Network error: ' + err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        setAuthToken(null);
         setIsLoggedIn(false);
         setUser(null);
         setSelectedModel(null);
@@ -111,9 +187,7 @@ const Admin = () => {
             setLoading(true);
             const response = await fetch(selectedModel.url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(formData)
             });
 
@@ -124,6 +198,9 @@ const Admin = () => {
                 setItemForm({});
                 setError('Item created successfully!');
                 setTimeout(() => setError(''), 3000);
+            } else if (response.status === 401) {
+                setError('Authentication required. Please log in again.');
+                handleLogout();
             } else {
                 const errorData = await response.json();
                 setError('Failed to create item: ' + JSON.stringify(errorData));
@@ -141,9 +218,7 @@ const Admin = () => {
             setLoading(true);
             const response = await fetch(`${selectedModel.url}${editingItem.id}/`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(formData)
             });
 
@@ -154,6 +229,9 @@ const Admin = () => {
                 setItemForm({});
                 setError('Item updated successfully!');
                 setTimeout(() => setError(''), 3000);
+            } else if (response.status === 401) {
+                setError('Authentication required. Please log in again.');
+                handleLogout();
             } else {
                 const errorData = await response.json();
                 setError('Failed to update item: ' + JSON.stringify(errorData));
@@ -173,13 +251,17 @@ const Admin = () => {
 
         try {
             const response = await fetch(`${selectedModel.url}${itemId}/`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: getAuthHeaders()
             });
 
             if (response.ok || response.status === 204) {
                 setItems(items.filter(item => item.id !== itemId));
                 setError('Item deleted successfully!');
                 setTimeout(() => setError(''), 3000);
+            } else if (response.status === 401) {
+                setError('Authentication required. Please log in again.');
+                handleLogout();
             } else {
                 setError('Failed to delete item: ' + response.status);
             }
@@ -257,18 +339,20 @@ const Admin = () => {
                         <h2>Log in</h2>
                         <div className="api-info">
                             <p><strong>API Base:</strong> {API_BASE_URL}</p>
-                            <p><em>Note: This interface bypasses Django admin authentication</em></p>
+                            <p><strong>Token Endpoint:</strong> POST /api/token/</p>
+                            <p><em>Use your Django admin credentials (email and password)</em></p>
                         </div>
                         <form onSubmit={handleLogin}>
                             <div className="form-row">
-                                <label htmlFor="id_username">Username:</label>
+                                <label htmlFor="id_email">Email:</label>
                                 <input
-                                    type="text"
-                                    id="id_username"
-                                    value={loginForm.username}
-                                    onChange={(e) => setLoginForm({...loginForm, username: e.target.value})}
-                                    placeholder="Enter any username"
+                                    type="email"
+                                    id="id_email"
+                                    value={loginForm.email}
+                                    onChange={(e) => setLoginForm({...loginForm, email: e.target.value})}
+                                    placeholder="Enter your email"
                                     required
+                                    disabled={loading}
                                 />
                             </div>
                             <div className="form-row">
@@ -278,13 +362,16 @@ const Admin = () => {
                                     id="id_password"
                                     value={loginForm.password}
                                     onChange={(e) => setLoginForm({...loginForm, password: e.target.value})}
-                                    placeholder="Enter any password"
+                                    placeholder="Enter your password"
                                     required
+                                    disabled={loading}
                                 />
                             </div>
                             
                             <div className="submit-row">
-                                <button type="submit">Log in</button>
+                                <button type="submit" disabled={loading}>
+                                    {loading ? 'Logging in...' : 'Log in'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -349,8 +436,8 @@ const Admin = () => {
                                 <form onSubmit={handleFormSubmit}>
                                     {selectedModel.fields.map(renderFormField)}
                                     <div className="form-actions">
-                                        <button type="submit" className="save-btn">
-                                            {editingItem ? 'Update' : 'Create'}
+                                        <button type="submit" className="save-btn" disabled={loading}>
+                                            {loading ? 'Saving...' : (editingItem ? 'Update' : 'Create')}
                                         </button>
                                         <button 
                                             type="button" 
@@ -360,6 +447,7 @@ const Admin = () => {
                                                 setCreatingItem(false);
                                                 setItemForm({});
                                             }}
+                                            disabled={loading}
                                         >
                                             Cancel
                                         </button>
@@ -440,18 +528,21 @@ const Admin = () => {
                                                             <button 
                                                                 className="view-btn"
                                                                 onClick={() => setViewingItem(item)}
+                                                                disabled={loading}
                                                             >
                                                                 View
                                                             </button>
                                                             <button 
                                                                 className="edit-btn"
                                                                 onClick={() => handleEdit(item)}
+                                                                disabled={loading}
                                                             >
                                                                 Edit
                                                             </button>
                                                             <button 
                                                                 className="delete-btn"
                                                                 onClick={() => deleteItem(item.id)}
+                                                                disabled={loading}
                                                             >
                                                                 Delete
                                                             </button>
@@ -467,6 +558,7 @@ const Admin = () => {
                                         <button 
                                             className="add-btn"
                                             onClick={handleCreate}
+                                            disabled={loading}
                                         >
                                             Add the first one
                                         </button>
